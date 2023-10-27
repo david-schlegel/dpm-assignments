@@ -86,7 +86,8 @@ data_amp_trial_exlusions <- data_amp_raw |>
 data_amp_trial_exlusions <- data_amp_raw |>
   filter(blockcode != "practice",
          trialcode != "instructions") |>
-  count(subject)
+  count(subject) |> 
+  count(n)
 
 # Shows that most have 72 trials. One has 8 (to low), one has 144 (probably filled it out two times). So I assume that the correct number of trials must be 72.
 # The one with 144 will be excluded later. So it would be possible to exclude directly the subject with 8. To be consistent I do the following and then join that with the other tables later on and exclude the date in the "Define Master exlusion".
