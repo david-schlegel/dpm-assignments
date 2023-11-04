@@ -102,10 +102,11 @@ use it e.g. when the first lines of an export are 'header trash'
 ```
 
 ## dir.create
+Create a directory. 
 
 ```{r}
 
-# dir.create()
+# dir.create("../path")
 
 ```
 
@@ -153,7 +154,7 @@ Keys on my mac: cmd+shift m
 
 ## round_half_up
 
-Das normale `round` in R rundet nicht, wie erwartet. Sehr wichtig.  
+Das normale `round` in R rundet nicht, wie erwartet. Sehr wichtig. Dafür kann `Janitor` benutzt werden.  
 
 ```{r}
 
@@ -226,11 +227,15 @@ combining variables with concatinate `c()`
 
 various helpers like `starts_with()`, `contains()`, etc.
 
+
+
 ```{r}
 # only select some columns
 # mtcars |> 
 # dplyr::select(mpg, disp)
 
+## Columns wegnehmen: 
+# -c(x, y)
 
 ```
 
@@ -293,10 +298,13 @@ or `summarise`. Der Befehl gibt eine Zeile pro gruppierter Variable zurück. Bei
 ```
 
 ## count
+Damit können verschiedenste Dinge gezählt werden. 
+- z. B. können die verschiedenen Elemente in einer Kolonne gezählt werden. 
+
 
 ```{r}
 
-# dplyr::count()
+# dplyr::count(gender) #Zählt die Anzahl Gender in einer Kolonne
 
 ```
 
@@ -375,6 +383,7 @@ Immer angeben, von welcher spalte die Namen genommen werden sollen und dann welc
 ```
 
 ## drop_na
+Damit können alle NAs gelöscht werden. Dabei werden die ganzen Zeilen gelöscht. 
 
 ```{r}
 
