@@ -37,7 +37,7 @@ library(stringr)
 data_demographics_raw <- read_csv("../data/raw/data_demographics_raw.csv") |>
   janitor::clean_names()
 
-# data_demographics_raw_messy <- read_csv("../../../data/AMP study/raw/data_demographics_raw_messy.csv", skip = 2) |>
+# data_demographics_raw_messy <- read_csv("../data/raw/data_demographics_raw_messy.csv", skip = 2) |>
 #   janitor::clean_names()
 
 # self report measure
@@ -76,35 +76,6 @@ dat_age_gender <- data_demographics_raw |>
 ## AMP
 
 ```{r}
-# Clean it so inspect the data visually
-data_amp_trial_exlusions <- data_amp_raw |>
-  filter(blockcode != "practice",
-         trialcode != "instructions")
-
-# Visual inspection shows that the test block must be the number 2_x. Most subjects range from 2_2 - 2_73
-
-data_amp_trial_exlusions <- data_amp_raw |>
-  filter(blockcode != "practice",
-         trialcode != "instructions") |>
-  count(subject) |> 
-  count(n)
-
-# Shows that most have 72 trials. One has 8 (to low), one has 144 (probably filled it out two times). So I assume that the correct number of trials must be 72.
-# The one with 144 will be excluded later. So it would be possible to exclude directly the subject with 8. To be consistent I do the following and then join that with the other tables later on and exclude the date in the "Define Master exlusion".
-
-data_amp_trial_exlusions <- data_amp_raw |>
-  filter(blockcode != "practice",
-         trialcode != "instructions") |>
-  count(subject) |>
-  mutate(exclude_wrong_trials = if_else(n != 72, "exclude", "include")) |>
-  select(-n)
-
-# I changed the rest of the code so it is now consistent.
-```
-
-- 1 is partical completed. 
-
-```{r}
 
 data_amp_performance_criteria <- data_amp_raw |> 
   filter(blockcode != "practice", 
@@ -114,7 +85,23 @@ data_amp_performance_criteria <- data_amp_raw |>
   summarize(proportion_fast_trials_amp = mean(latency_prob)) |>
   mutate(exclude_amp_performance = ifelse(proportion_fast_trials_amp > 0.10, "exclude", "include"))
 
+# determine modal number of trials
+data_amp_completeness <- data_amp_raw |>
+  filter(blockcode != "practice",
+         trialcode != "instructions") |>
+  group_by(subject) |>
+  count() |>
+  ungroup() |>
+  mutate(exclude_amp_completeness = ifelse(n == 72, "include", "exclude")) |>
+  select(-n)
+
+# data_amp_completeness |>
+#   count(n)
+
 ```
+
+- One participant with 8 trials appears to be a partial completion (check raw data?)
+- One participant with 144 trials appears to be a repeat participant. I've chosen to exclude them entirely, but you could also have a more elaborate strategy where you retain only their first completion.
 
 # Self-reports
 
@@ -148,9 +135,52 @@ data_selfreport_scored <-
 TODO extract evaluations on the AMP test blocks and convert to an overall bias score
 
 ```{r}
+data_amp_bias_score <- data_amp_raw |> 
+  select(-c(date, time, primestim, targetstim, latency)) |> 
+  filter(blockcode != "practice", 
+         trialcode != "instructions") |> 
+  rename(evaluative_response = correct) |>
+  mutate(prime_congruence = case_when(
+    trialcode == "prime_positive" & evaluative_response == 1 ~   1, 
+    trialcode == "prime_negative" & evaluative_response == 0 ~   1, 
+    TRUE ~ 0)) 
 
+## just a small change to check if the sanity check works. 
+#data_amp_bias_score[2, "prime_congruence"] <- 1
+
+
+# Sanity Check 1: Check in reverse if the prime congruence is correct
+expected_congruence <- (data_amp_bias_score$trialcode == "prime_positive" & data_amp_bias_score$evaluative_response == 1) | 
+  (!data_amp_bias_score$trialcode == "prime_positive" & data_amp_bias_score$evaluative_response == 0)
+
+congruence_check <- expected_congruence == data_amp_bias_score$prime_congruence
+
+if(any(!congruence_check)) {
+  stop("Sanity Check Failed: Discrepancy found in 'prime_congruence' calculation")
+}
+
+# Finish the bias score
+data_amp_bias_score <- data_amp_bias_score |> 
+  group_by(subject) |> 
+  summarize(amp_score = mean(prime_congruence))
+  
+```
+
+## Sanity Checks
+
+```{r}
+# is the Amp_Score between 0 and 1?
+data_amp_bias_score |> 
+   mutate(amp_score_test = amp_score >= 0 & amp_score <= 1) |> 
+  count(amp_score_test)
+
+# Are there any NAs in the calculated column?
+data_amp_bias_score |>
+  summarise(na_count = sum(is.na(amp_score)))
 
 ```
+
+
 
 # Combine
 
@@ -159,11 +189,11 @@ TODO extract evaluations on the AMP test blocks and convert to an overall bias s
 # combine all dfs created in the previous chunks
 data_processed_temp <- dat_age_gender |>
   full_join(data_selfreport_scored, by = "subject") |> 
-  full_join(data_amp_performance_criteria, by = "subject") |> 
-  full_join(data_amp_trial_exlusions)
+  full_join(data_amp_performance_criteria, by = "subject") |>
+  full_join(data_amp_completeness, by = "subject") |> 
+  full_join(data_amp_bias_score, by = "subject")
 
 # flag all subjects with more than one row in the wide-format data. these should be excluded in the analysis.
-# Dies ist erst hier sichtbar. 
 # a more elaborate approach would be to track down the individual dupicate cases and determine which of the mulitiple cases should be retained. 
 data_processed_duplicates <- data_processed_temp |>
   count(subject) |>
@@ -190,13 +220,9 @@ data_processed <- data_processed_before_exclusions |>
                                          # How to treat missing data is a  whole area of work in itself, which we wont cover here.
                                          is.na(age) ~ "exclude", 
                                          is.na(gender) ~ "exclude",
-                                         # Exclude like, positive, prefer if one is missing. 
-                                         is.na(like) ~ "exclude",
-                                         is.na(positive) ~ "exclude",
-                                         is.na(prefer) ~ "exclude",
-                                        exclude_amp_performance == "exclude" ~ "exclude",
+                                         exclude_amp_performance == "exclude" ~ "exclude",
                                          exclude_duplicate_data == "exclude" ~ "exclude",
-                                         exclude_wrong_trials == "exclude" ~ "exclude",
+                                         exclude_amp_completeness == "exclude" ~ "exclude", 
                                          TRUE ~ "include"))
 
 ```
@@ -206,10 +232,10 @@ data_processed <- data_processed_before_exclusions |>
 ```{r}
 
 # in case this dir doesn't exist, create it
-dir.create("../../../data/AMP study/processed/")
+dir.create("../data/processed/")
 
 # save data to disk in that dir
-write_csv(data_processed, "../../../data/AMP study/processed/data_processed.csv")
+write_csv(data_processed, "../data/processed/data_processed.csv")
 
 ```
 
