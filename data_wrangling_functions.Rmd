@@ -434,6 +434,17 @@ print(df_separated)
 
 ```
 
+# Color Palettes
+
+```{r}
+colors <- viridis_pal(begin = 0.0, end = 1.0, option = "mako")(10)
+colors
+show_col(colors)
+
+colors_wes <- wes_palette("GrandBudapest1")
+show_col(colors_wes)
+
+```
 
 # Other packages 
 

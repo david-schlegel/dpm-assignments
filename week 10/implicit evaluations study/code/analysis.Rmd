@@ -167,7 +167,29 @@ ggplot(data_processed_after_exclusions, aes(x = mean_evaluation)) +
 \TODO add table of means, SDs, Ns
 
 ```{r}
-  
+# overall self-reported evaluations
+dat_amp_ratings <- data_processed_after_exclusions |>
+  summarise(Mean = mean(AMP_score, na.rm = TRUE),
+            SD = sd(AMP_score, na.rm = TRUE),
+            n = n()) |>
+  mutate(group = "Full sample")
+
+# self-reported evaluations by gender category
+dat_amp_ratings_by_gender <- data_processed_after_exclusions |>
+  group_by(group = gender) |>
+  summarise(Mean = mean(AMP_score, na.rm = TRUE),
+            SD = sd(AMP_score, na.rm = TRUE),
+            n = n())
+
+# combine both into one table
+bind_rows(dat_amp_ratings,
+          dat_amp_ratings_by_gender) |>
+  select(Subset = group, Mean, SD, n) |> # select variables of interest, and rename one 
+  mutate(Subset = stringr::str_to_sentence(Subset)) |> # Change the case of the Subset variable so that it prints nicely
+  mutate_if(is.numeric, round_half_up, digits = 2) |>
+  kable() |>
+  add_header_above(header = c(" " = 1, "Self-reported evaluations" = 3)) |>
+  kable_classic(full_width = FALSE)
 
 ```
 
@@ -257,7 +279,6 @@ p_male_hist <- ggExtra::ggMarginal(p_male, type = "histogram")
 p_female_hist <- ggExtra::ggMarginal(p_female, type = "histogram")
 
 gridExtra::grid.arrange(p_male_hist, p_female_hist, ncol = 1)
-
 ```
 ```{r}
 p1 <- ggplot(data_processed_after_exclusions, 
@@ -266,9 +287,9 @@ p1 <- ggplot(data_processed_after_exclusions,
            colour = gender)) +
     geom_jitter(alpha = 0.5) +
   xlab("AMP score") +
-  ylab("Mean self-reported evaluation") 
+  ylab("Mean self-reported evaluation")
 
-ggMarginal(p1, groupColour = TRUE, groupFill = TRUE)
+  ggExtra::ggMarginal(p1, groupColour = TRUE, groupFill = TRUE)
 
 
 ```
@@ -279,19 +300,30 @@ ggMarginal(p1, groupColour = TRUE, groupFill = TRUE)
 
 Label points using ggrepel: https://cran.r-project.org/web/packages/ggrepel/vignettes/ggrepel.html
 
-\TODO Label the points in a scatter plot using their participant codes.
+\TODO Label the points in a scatter plot using their participant codes. Label only the participants with more extreme scores.
 
 ```{r}
 library(ggrepel)
 
-ggplot(data_processed_after_exclusions, 
-       aes(x = AMP_score,
-           y = mean_evaluation,
-           label = subject)) +
-  geom_jitter(color = viridis_pal(begin = 0.45, option = "mako")(1),
-              alpha = 0.5) 
+# Berechnen der 95. Perzentile für AMP_score und mean_evaluation
+quantile_95_mean_evaluation <- quantile(data_processed_after_exclusions$mean_evaluation, 0.95)
 
-  geom_text_repel()
+
+# Filtern der Daten für Werte im 95. Perzentil
+extreme_values <- data_processed_after_exclusions |> 
+  filter(mean_evaluation >= quantile_95_mean_evaluation)
+
+ggplot(data_processed_after_exclusions, 
+          aes(x = AMP_score,
+              y = mean_evaluation,
+              label = subject)) +
+geom_jitter(color = viridis_pal(begin = 0.45, option = "mako")(1),
+            alpha = 0.5) + 
+  geom_text_repel(data = extreme_values,
+                  aes(label = subject),
+                  box.padding = 0.35,
+                  point.padding = 0.5,
+                  segment.color = 'grey50')
 
 ```
 
@@ -308,25 +340,23 @@ p2 <- ggplot(data_processed_after_exclusions,
        aes(x = AMP_score,
            y = mean_evaluation, 
            colour = gender)) +
-  geom_jitter(alpha = 0.5)
-p2
-
-from <- c(xmin = 0.4, xmax = 0.6, ymin = 0.8, ymax = 1.3 )
-# Names xmin, xmax, ymin, ymax are optional:
-to <- c(xmin = 0.75, xmax = 1, ymin = 4, ymax = 5.8 )
-
-p2 + geom_magnify(from = from, to = to) +
+  geom_jitter(alpha = 0.5) +
+  geom_magnify(shape = "rect",
+               from = c(xmin = 0.4, xmax = 0.6, ymin = 0.8, ymax = 1.3 ),
+               to = c(xmin = 0.75, xmax = 1, ymin = 4, ymax = 5.8 )) +
   theme_minimal()
+
+p2
 
 ```
 
-```{r}
-colors <- viridis_pal(begin = 0.0, end = 1.0, option = "mako")(10)
-colors
-show_col(colors)
+### Test
 
-colors_wes <- wes_palette("GrandBudapest1")
-show_col(colors_wes)
+\TODO run an appropriate test. Below the output, interpret the results: write a few sentences that report and interpret the results following APA reporting style.
+
+```{r}
+
+
 
 ```
 
@@ -352,43 +382,29 @@ ggplot(data_processed_after_exclusions,
 
 
 ggplot(data_processed_after_exclusions, 
-       aes(x = mean_evaluation,
-           y = AMP_score,
-           fill = gender)) +
-  geom_violin() +
-  facet_grid(~ gender) +
+       aes(y = mean_evaluation,
+           x = gender,
+           fill = gender, 
+           color = gender)) +
+  geom_violin(alpha = 0.5, size = 0.5) +
   theme_minimal()
-
-Q1 <- quantile(data_processed_after_exclusions$mean_evaluation, 0.25)
-Q3 <- quantile(data_processed_after_exclusions$mean_evaluation, 0.75)
-IQR <- Q3 - Q1
-
-data_processed_after_exclusions$outlier <- with(data_processed_after_exclusions, mean_evaluation < (Q1 - 1.5 * IQR) | mean_evaluation > (Q3 + 1.5 * IQR))
-
-
-ggplot(data_processed_after_exclusions, 
-       aes(x = AMP_score, y = mean_evaluation, label = subject)) +
-  geom_jitter(color = viridis_pal(begin = 0.45, option = "mako")(1),
-              alpha = 0.5) +
-  geom_text_repel(data = subset(data_processed_after_exclusions, outlier),
-                  aes(label = subject),
-                  box.padding = 0.35, point.padding = 0.3,
-                  segment.color = 'grey50') +
-  theme_minimal()
-
-
 
 ```
 
 ### Test
 
-\TODO 
+\TODO run an appropriate test. Below the output, interpret the results: write a few sentences that report and interpret the results following APA reporting style.
 
 ```{r}
 
-
+filtered_data <- data_processed_after_exclusions |> 
+  filter(gender %in% c("male", "female"))
+  
+ttest_mean.eval_gender <- t.test(mean_evaluation ~ gender, data = filtered_data)
 
 ```
+In der Analyse der Mittelwertsunterschiede wurde die Gruppe "non-binary" ausgeschlossen, da sie mit $n=2$ zu wenig Datenpunkte aufweist. Für die zwei Geschlechter männlich und weiblich zeigt sich auf einem Level von ${p=0.05}$ und einem Wert von $p =$ `r round(ttest_mean.eval_gender$p.value, 2)`, dass die Unterschiede in der Mean Evaluation zwischen den Geschlechtern signifikant ist.  
+
 
 ## Evaluations on the Affect Misattribution Procedure differ between men and women
 
@@ -400,17 +416,35 @@ This time, vary the labeling and order of the legend, e.g., capitalise "Men" and
 
 ```{r}
 
-
-
+ggplot(data_processed_after_exclusions, 
+       aes(y = mean_evaluation,
+           x = gender,
+           fill = gender, 
+           color = gender)) +
+  geom_violin(alpha = 0.5, size = 0.5) +
+  scale_x_discrete(limits = c("male", "female", "nonbinary")) +
+  scale_x_discrete(limits = c("male", "female", "nonbinary"), 
+                   labels = c("Male", "Female", "Non-Binary")) +
+  scale_fill_discrete(limits = c("male", "female", "nonbinary"),
+                      name = "Gender", labels=c("Male", "Female", "Non-Binary")) +
+  scale_color_discrete(limits = c("male", "female", "nonbinary"),
+                       name = "Gender", labels=c("Male", "Female", "Non-Binary")) +
+  labs(x = "Gender", y = "Mean Evaluation") +
+  theme_minimal()
 ```
 
 ### Test
 
-\TODO 
+\TODO run an appropriate test. Below the output, print an interpretation of the results generated by the 'easystats' package [report](https://easystats.github.io/report/). I.e., use `report::report()`.
 
 ```{r}
+library(report)
 
-
+filtered_data <- data_processed_after_exclusions |> 
+  filter(gender %in% c("male", "female"))
+  
+ttest_mean.eval_gender <- t.test(mean_evaluation ~ gender, data = filtered_data)
+report(ttest_mean.eval_gender)
 
 ```
 
@@ -421,8 +455,45 @@ Combine plots using patchwork: https://patchwork.data-imaginist.com/
 \TODO Combine at least three of the above plots into one.
 
 ```{r}
+library(patchwork)
 
+p1 <- ggplot(data_processed_after_exclusions, 
+       aes(x = AMP_score,
+           y = mean_evaluation)) +
+  geom_jitter(color = viridis_pal(begin = 0.45, option = "mako")(1),
+              alpha = 0.5) +
+  xlab("AMP score") +
+  ylab("Mean self-reported evaluation") +
+  theme_linedraw() 
 
+p2 <- ggplot(data_processed_after_exclusions, 
+       aes(y = mean_evaluation,
+           x = gender,
+           fill = gender, 
+           color = gender)) +
+  geom_violin(alpha = 0.5, size = 0.5) +
+  scale_x_discrete(limits = c("male", "female", "nonbinary")) +
+  scale_x_discrete(limits = c("male", "female", "nonbinary"), 
+                   labels = c("Male", "Female", "Non-Binary")) +
+  scale_fill_discrete(limits = c("male", "female", "nonbinary"),
+                      name = "Gender", labels=c("Male", "Female", "Non-Binary")) +
+  scale_color_discrete(limits = c("male", "female", "nonbinary"),
+                       name = "Gender", labels=c("Male", "Female", "Non-Binary")) +
+  labs(x = "Gender", y = "Mean Evaluation") +
+  theme_minimal()
+
+p3 <- ggplot(data_processed_after_exclusions,
+             aes(x = AMP_score,
+             y = mean_evaluation, 
+             colour = gender)) +
+    geom_jitter(alpha = 0.5) +
+    geom_magnify(shape = "rect",
+                 from = c(xmin = 0.4, xmax = 0.6, ymin = 0.8, ymax = 1.3 ),
+                 to = c(xmin = 0.75, xmax = 1, ymin = 4, ymax = 5.8 )) +
+    theme_minimal()
+
+p1 + p2 + p3 +
+  plot_layout(widths = c(2, 2))
 
 ```
 
@@ -434,7 +505,8 @@ Save plots to disk with `ggsave()`
 
 ```{r}
 
-
+ggsave("combined_plots.png", dpi = 300)
+ggsave("combined_plots.pdf", dpi = 300)
 
 ```
 
