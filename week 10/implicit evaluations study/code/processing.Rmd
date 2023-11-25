@@ -237,7 +237,7 @@ if(!file.exists("../data/processed/data_processed_codebook.xlsx")){
   codebook_template <- data.frame(variable = colnames(data_processed)) |>
     mutate(explanation = NA)
   # write to disk as an excel file
-  write.xlsx(codebook_template, file = "../data/processed/data_processed_codebook.xlsx")
+  openxlsx::write.xlsx(codebook_template, file = "../data/processed/data_processed_codebook.xlsx")
 }
 ```
 
