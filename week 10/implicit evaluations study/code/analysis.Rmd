@@ -356,9 +356,12 @@ p2
 
 ```{r}
 
+cor.test(data_processed_after_exclusions$AMP_score, data_processed_after_exclusions$mean_evaluation, 
+         method = "pearson")
 
 
 ```
+there is a small negativ correlation between the AMP-Score and the evaluation mean. This correlation is not significant. 
 
 
 ### Test
@@ -426,11 +429,22 @@ ggplot(data_processed_after_exclusions,
   scale_x_discrete(limits = c("male", "female", "nonbinary"), 
                    labels = c("Male", "Female", "Non-Binary")) +
   scale_fill_discrete(limits = c("male", "female", "nonbinary"),
-                      name = "Gender", labels=c("Male", "Female", "Non-Binary")) +
+                      name = "Gender", 
+                      labels=c("Male", "Female", "Non-Binary")) +
   scale_color_discrete(limits = c("male", "female", "nonbinary"),
                        name = "Gender", labels=c("Male", "Female", "Non-Binary")) +
   labs(x = "Gender", y = "Mean Evaluation") +
   theme_minimal()
+```
+```{r}
+ggplot(data_processed_after_exclusions, aes(x = AMP_score, fill = gender)) +
+  geom_histogram(binwidth = 0.15, color = "black", alpha = 0.7) +
+  facet_grid(. ~ gender) +
+  scale_fill_manual(values = c("female" = "red", "male" = "blue", "nonbinary" = "yellow"),
+                    labels = c("Female", "Male", "Non-binary")) +
+  labs(x = "AMP score", y = "Mean self-reported evaluation", fill = "Gender") +
+  theme_minimal()
+
 ```
 
 ### Test
