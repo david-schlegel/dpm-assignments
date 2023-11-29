@@ -1,0 +1,134 @@
+---
+title: "Plot Assignment"
+subtitle: "Data processing"
+author: "David Schlegel"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    highlight: haddock
+    theme: flatly
+    toc: yes
+    toc_float: yes
+---
+
+```{r, include=FALSE}
+
+knitr::opts_chunk$set(message = FALSE,
+                      warning = FALSE)
+
+```
+
+# Dependencies
+
+```{r}
+
+library(tidyverse)
+library(janitor) 
+library(stringr)
+library(openxlsx)
+
+```
+
+# Get data
+
+```{r}
+
+# demographics
+data_raw <- read_csv2("../data/raw/data_raw.csv", ) |> 
+  janitor::clean_names()
+
+```
+
+# Demographics
+
+```{r}
+
+dat <- data_raw |> 
+  select(-c(topic_type, data_source, data_value_unit, data_value_type, topic_type, 
+            response, data_value_footnote_symbol)) |> 
+  filter(topic_desc == "Cigarette Use (Adults)",
+         measure_desc == "Current Smoking",
+         location_desc == "Alaska",
+         education == "All Grades" 
+         ) 
+
+distinct(dat, education)
+
+```
+
+# Exclusions / data quality
+
+## AMP
+
+```{r}
+
+```
+
+
+# Define master exclusions
+
+```{r}
+
+# create a master exclude_participant variable
+data_processed <- data_processed_before_exclusions |>
+  mutate(exclude_participant = case_when(tolower(age) == "test" ~ "exclude",
+                                         tolower(gender) == "test" ~ "exclude",
+                                         is.na(mean_evaluation) ~ "exclude",
+                                         # in this case we will exclude participants with missing demographics data or outcomes measures data. 
+                                         # Note that "list-wise exclusions" like this aren't always justified, as missingness often isn't at random. 
+                                         # How to treat missing data is a  whole area of work in itself, which we wont cover here.
+                                         is.na(age) ~ "exclude", 
+                                         is.na(gender) ~ "exclude",
+                                         exclude_amp_performance == "exclude" ~ "exclude",
+                                         exclude_duplicate_data == "exclude" ~ "exclude",
+                                         exclude_amp_completeness == "exclude" ~ "exclude", 
+                                         TRUE ~ "include"))
+
+```
+
+# Write to disk
+
+```{r}
+
+# in case this dir doesn't exist, create it
+dir.create("../data/processed/")
+
+# save data to disk in that dir
+write_csv(data_processed, "../data/processed/data_processed.csv")
+
+```
+
+# Create codebook template for the processed data
+
+
+```{r}
+if(!file.exists("../data/processed/data_processed_codebook.xlsx")){
+  # convert the column names to a df
+  codebook_template <- data.frame(variable = colnames(data_processed)) |>
+    mutate(explanation = NA)
+  # write to disk as an excel file
+  openxlsx::write.xlsx(codebook_template, file = "../data/processed/data_processed_codebook.xlsx")
+}
+```
+
+Note that there are other ways of automatically creating more elaborate codebooks from your datasets. These often contain information about min/max/mean/SD, distribution, etc. For example:
+
+- Ruben Arslan's {codebook}
+  - [R package with How-Tos](https://rubenarslan.github.io/codebook/)
+  - [Tutorial](https://rubenarslan.github.io/codebook/articles/codebook_tutorial.html)
+  - [Article](https://journals.sagepub.com/doi/full/10.1177/2515245919838783)
+- Petersen & Ekstrøm's {dataReporter}
+  - [Article](https://www.jstatsoft.org/article/view/v090i06)
+  - [Blog](https://sandsynligvis.dk/2017/08/21/datamaid-your-personal-assistant-for-cleaning-up-the-data-cleaning-process/)
+  - [R package](https://cran.r-project.org/web/packages/dataReporter/index.html)
+
+# Session info
+
+```{r}
+
+sessionInfo()
+
+```
+
+
