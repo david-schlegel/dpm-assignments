@@ -58,7 +58,7 @@ data_amp_raw <- read_csv("../data/raw/data_amp_raw.csv") |>
 dat_age_gender <- data_demographics_raw |>
   select(subject, date, time, trialcode, response) |>
   pivot_wider(names_from = trialcode,
-              values_from = response) |>
+              values_from = response) |> 
   mutate(gender = tolower(gender),
          gender = stringr::str_remove_all(gender, regex("\\W+")), # regex is both very useful and awful to write
          gender = case_when(gender == "female" ~ gender,

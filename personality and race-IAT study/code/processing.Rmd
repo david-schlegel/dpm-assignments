@@ -48,18 +48,129 @@ data_iat_raw <- read_csv("../data/raw/data_raw_iat.csv") |>
 ```
 
 # Demographics
-
+## Extract age and gender from the raw demographics data.
 ```{r}
 dat_age_gender <- data_demographics_raw |> 
   pivot_wider(names_from = variable,
-              values_from = response)
+              values_from = response) |> 
+  mutate(gender = sex,
+         gender = case_when(gender == "f" ~ "female",
+                            gender == "m" ~ "male",
+                            TRUE ~ "not indicated"),
+         age = as.character(age),
+         age = case_when(str_detect(age, "^[0-9]+$") ~ age,
+                         TRUE ~ "not indicated"), 
+         unique_id = case_when(!is.na(as.numeric(unique_id)) ~ as.character(unique_id),
+                               TRUE ~ "other/missing/error")) |> 
+  select(-sex)
 
+```
+# Data bfi
+  - Include a sanity check that assesses whether these list of item reversals, and your implementation of them, is likely to be correct: For each subscale, create a correlation table among the items (after reversals) and check that all correlations are positive. IN general, negative correlations among items are one indication that information about item reversals, or their implementation, is not correct.  
+  - Check that the item level data does not violate the logical minimum and maximum scores (1 to 6). Create an exclusion variable and set participants with impossible data to "exclude". 
+  - Check that all participants have complete data on the BFI scales they completed. Create an exclusion variable and set participants with incomplete data to "exclude".
+
+## Recoding Data (reverse scales)
+
+```{r}
+# Function to recode negatively worded items
+reverse_score <- function(x) {
+  case_when(
+    x == 1 ~ 6,
+    x == 2 ~ 5, 
+    x == 3 ~ 4,
+    x == 4 ~ 3,
+    x == 5 ~ 2,
+    x == 6 ~ 1,
+    x == 0 ~ 0, # Question: why are there 0?
+    TRUE ~ NA_real_  
+  )
+}
+```
+
+```{r}
+dat_bfi <- data_bfi_raw |> 
+  mutate(across(c(bfi_e2, bfi_e5, bfi_e7, bfi_c2, bfi_c4, bfi_c5, bfi_c9, bfi_n2, bfi_n5,
+                bfi_n7, bfi_a1, bfi_a3, bfi_a6, bfi_a8, bfi_o7, bfi_o9), ~ reverse_score(.), 
+         .names = "{.col}_recode"))
 
 ```
 
 
-# Processing
+## Sanity Checks after recoding
+### Check correlations
+```{r}
+sanity_check_bfi_scale <- function(data, scale_columns) {
+  cor_data <- data %>% 
+    select(all_of(scale_columns)) %>% 
+    cor(use = "complete.obs")
+  
+  all(cor_data >= 0, na.rm = TRUE)
+}
 
--   Extract age and gender from the raw demographics data.
--   Reverse score the negatively worded items: the extroversion scale items 2, 5 and 7, conscientiousness items 2, 4 5 and 9, neuroticism items 2, 5, and 7, agreeableness 1, 3, 6, and 8, and openness items 7 and 9.
-    -   Include a sanity check that assesses whether these list of item reversals, and your implementation of them, is likely to be correct: For each subscale, create a correlation table among the items (after reversals) and check that all correlations are positive. IN general, negative correlations among items are one indication that information about item reversals, or their implementation, is not correct.\
+# Sanity-Checks für jede BFI-Subskala
+sanity_check_bfi_scale(dat_bfi, c("bfi_e1", "bfi_e2_recode", 
+                                                        "bfi_e3", "bfi_e4", "bfi_e5_recode", "bfi_e6", "bfi_e7_recode", "bfi_e8"))
+sanity_check_bfi_scale(dat_bfi, c("bfi_c1", "bfi_c2_recode", 
+                                                             "bfi_c3", "bfi_c4_recode", "bfi_c5_recode", "bfi_c6", "bfi_c7", "bfi_c8", "bfi_c9_recode"))
+sanity_check_bfi_scale(dat_bfi, c("bfi_n1", "bfi_n2_recode", "bfi_n3", 
+                                                       "bfi_n4", "bfi_n5_recode", "bfi_n6", "bfi_n7_recode", "bfi_n8"))
+sanity_check_bfi_scale(dat_bfi, c("bfi_a1_recode", "bfi_a2", "bfi_a3_recode", 
+                                                         "bfi_a4", "bfi_a5", "bfi_a6_recode", "bfi_a7", "bfi_a8_recode", "bfi_a9"))
+sanity_check_bfi_scale(dat_bfi, c("bfi_o1", "bfi_o2", "bfi_o3", "bfi_o4", "bfi_o5", 
+                                                    "bfi_o6", "bfi_o7_recode", "bfi_o8", "bfi_o9_recode", "bfi_o10"))
+
+# there is one negativ in openness, but it is close to zero and only between o7 and o10. Decision, still correct. 
+```
+
+- there is one negativ in openness, but it is close to zero and only between o7 and o10. Decision, still correct. 
+
+### Check logical minimum and maximum scores (1 to 6)
+```{r}
+
+dat_bfi <- dat_bfi |>
+  rowwise() |>
+  mutate(exclude_value_bfi = if_else(any((c_across(starts_with("bfi")) < 1 | 
+                                         c_across(starts_with("bfi")) > 6),
+                                     na.rm = TRUE), "exclude", "include")) |>
+  ungroup()
+
+```
+
+### Check completness of Date of each participant
+```{r}
+check_bfi_scale <- function(data, scale_prefix, threshold) {
+  data %>%
+    rowwise() %>%
+    mutate(!!paste0("exclude_incomplete_scales_", scale_prefix) := {
+      vals = c_across(grep(paste0("^", scale_prefix, "(?!.*recode)"), names(data), perl = TRUE, value = TRUE))
+      num_non_na = sum(!is.na(vals))
+      if_else(num_non_na > 0 && num_non_na < threshold, "exclude", "include")
+    }) %>%
+    ungroup()
+}
+
+dat_bfi <- check_bfi_scale(dat_bfi, "bfi_a", 9)
+dat_bfi <- check_bfi_scale(dat_bfi, "bfi_c", 9)
+dat_bfi <- check_bfi_scale(dat_bfi, "bfi_e", 8)
+dat_bfi <- check_bfi_scale(dat_bfi, "bfi_o", 10)
+dat_bfi <- check_bfi_scale(dat_bfi, "bfi_n", 8)
+
+```
+
+## Mean-Score subscales incl. sanity check
+- Mean-score the subscales of the BFI scale. Each participant only got either 2 or 3 subscales. 
+  - Check that the mean scores do not violate the min and max possible score (i.e., first determine this min and max score), and revise your scoring code if it does. 
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
