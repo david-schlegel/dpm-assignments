@@ -41,7 +41,7 @@ data_bfi_raw <- read_csv("../data/raw/data_raw_bfi.csv") |>
   janitor::clean_names()
 
 # Implicit association test
-data_iat_raw <- read_csv("../data/raw/data_raw_iat.csv") |>
+data_iat_raw <- read_csv("../data/raw/data_raw_iat.csv", skip = 1) |>
   janitor::clean_names()
 
 
@@ -49,6 +49,7 @@ data_iat_raw <- read_csv("../data/raw/data_raw_iat.csv") |>
 
 # Demographics
 ## Extract age and gender from the raw demographics data.
+- Extract age and gender from the raw demographics data.
 ```{r}
 dat_age_gender <- data_demographics_raw |> 
   pivot_wider(names_from = variable,
@@ -59,16 +60,13 @@ dat_age_gender <- data_demographics_raw |>
                             TRUE ~ "not indicated"),
          age = as.character(age),
          age = case_when(str_detect(age, "^[0-9]+$") ~ age,
-                         TRUE ~ "not indicated"), 
-         unique_id = case_when(!is.na(as.numeric(unique_id)) ~ as.character(unique_id),
-                               TRUE ~ "other/missing/error")) |> 
+                         TRUE ~ "not indicated")) |> 
+  filter(unique_id != is.na(unique_id)) |> 
   select(-sex)
 
 ```
 # Data bfi
-  - Include a sanity check that assesses whether these list of item reversals, and your implementation of them, is likely to be correct: For each subscale, create a correlation table among the items (after reversals) and check that all correlations are positive. IN general, negative correlations among items are one indication that information about item reversals, or their implementation, is not correct.  
-  - Check that the item level data does not violate the logical minimum and maximum scores (1 to 6). Create an exclusion variable and set participants with impossible data to "exclude". 
-  - Check that all participants have complete data on the BFI scales they completed. Create an exclusion variable and set participants with incomplete data to "exclude".
+- Reverse score the negatively worded items: the extroversion scale items 2, 5 and 7, conscientiousness items 2, 4 5 and 9, neuroticism items 2, 5, and 7, agreeableness 1, 3, 6, and 8, and openness items 7 and 9.
 
 ## Recoding Data (reverse scales)
 
@@ -94,67 +92,87 @@ dat_bfi <- data_bfi_raw |>
                 bfi_n7, bfi_a1, bfi_a3, bfi_a6, bfi_a8, bfi_o7, bfi_o9), ~ reverse_score(.), 
          .names = "{.col}_recode"))
 
+# For mitigating copy & past errors build a vector with the used subscales original & recoded
+sub_bfi_a <- c("bfi_a1_recode", "bfi_a2", "bfi_a3_recode", "bfi_a4", "bfi_a5", "bfi_a6_recode", "bfi_a7", "bfi_a8_recode", "bfi_a9")
+sub_bfi_c <- c("bfi_c1", "bfi_c2_recode", "bfi_c3", "bfi_c4_recode", "bfi_c5_recode", "bfi_c6", "bfi_c7", "bfi_c8", "bfi_c9_recode")
+sub_bfi_e <- c("bfi_e1", "bfi_e2_recode", "bfi_e3", "bfi_e4", "bfi_e5_recode", "bfi_e6", "bfi_e7_recode", "bfi_e8")
+sub_bfi_n <- c("bfi_n1", "bfi_n2_recode", "bfi_n3", "bfi_n4", "bfi_n5_recode", "bfi_n6", "bfi_n7_recode", "bfi_n8")
+sub_bfi_o <- c("bfi_o1", "bfi_o2", "bfi_o3", "bfi_o4", "bfi_o5", "bfi_o6", "bfi_o7_recode", "bfi_o8", "bfi_o9_recode", "bfi_o10")
+
 ```
 
 
 ## Sanity Checks after recoding
 ### Check correlations
+  - Include a sanity check that assesses whether these list of item reversals, and your implementation of them, is likely to be correct: For each subscale, create a correlation table among the items (after reversals) and check that all correlations are positive. IN general, negative correlations among items are one indication that information about item reversals, or their implementation, is not correct.  
 ```{r}
 sanity_check_bfi_scale <- function(data, scale_columns) {
   cor_data <- data %>% 
     select(all_of(scale_columns)) %>% 
     cor(use = "complete.obs")
-  
   all(cor_data >= 0, na.rm = TRUE)
 }
 
-# Sanity-Checks für jede BFI-Subskala
-sanity_check_bfi_scale(dat_bfi, c("bfi_e1", "bfi_e2_recode", 
-                                                        "bfi_e3", "bfi_e4", "bfi_e5_recode", "bfi_e6", "bfi_e7_recode", "bfi_e8"))
-sanity_check_bfi_scale(dat_bfi, c("bfi_c1", "bfi_c2_recode", 
-                                                             "bfi_c3", "bfi_c4_recode", "bfi_c5_recode", "bfi_c6", "bfi_c7", "bfi_c8", "bfi_c9_recode"))
-sanity_check_bfi_scale(dat_bfi, c("bfi_n1", "bfi_n2_recode", "bfi_n3", 
-                                                       "bfi_n4", "bfi_n5_recode", "bfi_n6", "bfi_n7_recode", "bfi_n8"))
-sanity_check_bfi_scale(dat_bfi, c("bfi_a1_recode", "bfi_a2", "bfi_a3_recode", 
-                                                         "bfi_a4", "bfi_a5", "bfi_a6_recode", "bfi_a7", "bfi_a8_recode", "bfi_a9"))
-sanity_check_bfi_scale(dat_bfi, c("bfi_o1", "bfi_o2", "bfi_o3", "bfi_o4", "bfi_o5", 
-                                                    "bfi_o6", "bfi_o7_recode", "bfi_o8", "bfi_o9_recode", "bfi_o10"))
+
+# Sanity-Checks for everiy BFI subscale
+sanity_check_bfi_scale(dat_bfi, sub_bfi_a)
+sanity_check_bfi_scale(dat_bfi, sub_bfi_c)
+sanity_check_bfi_scale(dat_bfi, sub_bfi_e)
+sanity_check_bfi_scale(dat_bfi, sub_bfi_o)
+sanity_check_bfi_scale(dat_bfi, sub_bfi_n)
 
 # there is one negativ in openness, but it is close to zero and only between o7 and o10. Decision, still correct. 
 ```
 
-- there is one negativ in openness, but it is close to zero and only between o7 and o10. Decision, still correct. 
+- there is one value negativ in openness, but it is close to zero and only between o7 and o10. Decision, still correct. 
 
 ### Check logical minimum and maximum scores (1 to 6)
+  - Check that the item level data does not violate the logical minimum and maximum scores (1 to 6). Create an exclusion variable and set participants with impossible data to "exclude".
 ```{r}
 
-dat_bfi <- dat_bfi |>
+dat_bfi_scores_completness <- dat_bfi |>
   rowwise() |>
-  mutate(exclude_value_bfi = if_else(any((c_across(starts_with("bfi")) < 1 | 
+  mutate(exclude_min_max_scores = if_else(any((c_across(starts_with("bfi")) < 1 | 
                                          c_across(starts_with("bfi")) > 6),
-                                     na.rm = TRUE), "exclude", "include")) |>
-  ungroup()
+                                     na.rm = TRUE), "exclude", "include")) |> 
+  select(unique_id, exclude_min_max_scores)
 
 ```
 
 ### Check completness of Date of each participant
+ - Check that all participants have complete data on the BFI scales they completed. Create an exclusion variable and set participants with incomplete data to "exclude".
+
 ```{r}
-check_bfi_scale <- function(data, scale_prefix, threshold) {
+
+check_bfi_scale <- function(data, columns, threshold, col_name) {
   data %>%
-    rowwise() %>%
-    mutate(!!paste0("exclude_incomplete_scales_", scale_prefix) := {
-      vals = c_across(grep(paste0("^", scale_prefix, "(?!.*recode)"), names(data), perl = TRUE, value = TRUE))
-      num_non_na = sum(!is.na(vals))
-      if_else(num_non_na > 0 && num_non_na < threshold, "exclude", "include")
-    }) %>%
-    ungroup()
+    mutate(!!rlang::sym(col_name) := {
+      vals <- purrr::pmap(list(!!!rlang::syms(columns)), ~c(...))
+      purrr::map_chr(vals, function(x) {
+        if (all(is.na(x))) {
+          "include"
+        } else {
+          num_non_na <- sum(!is.na(x))
+          if (num_non_na >= threshold) {
+            "include"
+          } else {
+            "exclude"
+          }
+        }
+      })
+    })
 }
 
-dat_bfi <- check_bfi_scale(dat_bfi, "bfi_a", 9)
-dat_bfi <- check_bfi_scale(dat_bfi, "bfi_c", 9)
-dat_bfi <- check_bfi_scale(dat_bfi, "bfi_e", 8)
-dat_bfi <- check_bfi_scale(dat_bfi, "bfi_o", 10)
-dat_bfi <- check_bfi_scale(dat_bfi, "bfi_n", 8)
+
+
+dat_bfi_participant_completeness <- dat_bfi |>  
+  check_bfi_scale(sub_bfi_a, 9, "sub_bfi_a") |>  
+  check_bfi_scale(sub_bfi_c, 9, "sub_bfi_c") |>
+  check_bfi_scale(sub_bfi_e, 8, "sub_bfi_e") |>
+  check_bfi_scale(sub_bfi_o, 10, "sub_bfi_o") |> 
+  check_bfi_scale(sub_bfi_n, 8, "sub_bfi_n") |> 
+  select(unique_id, c(starts_with("sub_bfi_")))
+
 
 ```
 
@@ -163,13 +181,172 @@ dat_bfi <- check_bfi_scale(dat_bfi, "bfi_n", 8)
   - Check that the mean scores do not violate the min and max possible score (i.e., first determine this min and max score), and revise your scoring code if it does. 
 ```{r}
 
+dat_bfi_means <- dat_bfi |> 
+  mutate(mean_bfi_a = rowMeans(select(dat_bfi, all_of(sub_bfi_a))),
+         mean_bfi_c = rowMeans(select(dat_bfi, all_of(sub_bfi_c))), 
+         mean_bfi_e = rowMeans(select(dat_bfi, all_of(sub_bfi_e))), 
+         mean_bfi_n = rowMeans(select(dat_bfi, all_of(sub_bfi_o))),
+         mean_bfi_o = rowMeans(select(dat_bfi, all_of(sub_bfi_n)))) |> 
+  select(unique_id, starts_with("mean_bfi"))
+
+# As the values are between 1 and 6 the mean can only be between 1 and six. 
+min_mean_score = 1
+max_mean_score = 6
+
+check_mean_score_range <- function(mean_score) {
+  mean_score >= min_mean_score & mean_score <= max_mean_score
+}
+
+check_values <- c(
+  check_mean_score_range(dat_bfi_means$mean_bfi_a),
+  check_mean_score_range(dat_bfi_means$mean_bfi_c),
+  check_mean_score_range(dat_bfi_means$mean_bfi_e),
+  check_mean_score_range(dat_bfi_means$mean_bfi_n),
+  check_mean_score_range(dat_bfi_means$mean_bfi_o)
+)
+
+# number of true and false. 
+num_true <- sum(check_values, na.rm = TRUE)
+num_false <- sum(!check_values, na.rm = FALSE)
+
+
+list(number_of_true = num_true,
+     number_of_false = num_false)
+
+```
+There are no FALSE means which are smaller than 1 or greater than 6. 
+
+# IAT 
+## Scoring
+- Mean-score the subscales of the BFI scale. Each participant only got either 2 or 3 subscales. 
+  - Check that the mean scores do not violate the min and max possible score (i.e., first determine this min and max score), and revise your scoring code if it does. 
+```{r}
+dat_iat <- data_iat_raw |>
+  # code correct and incorrect to 1 and 0
+  mutate(trial_correct = case_when(trial_accuracy == "correct" ~ 1, 
+                                   trial_accuracy == "incorrect" ~ 0,
+                                   TRUE ~ NA)) |> 
+  filter(!block_number %in% c(1, 2, 5)) 
+
+# Calculations of mean and sd
+mean1 <- dat_iat |> 
+  filter(block_number %in% c(3, 6)) |> 
+  pull(trial_correct) |> 
+  mean()
+         
+mean2 <- dat_iat |> 
+  filter(block_number %in% c(4, 7)) |> 
+  pull(trial_correct) |> 
+  mean()
+
+sd_rt <- dat_iat |> 
+  pull(trial_correct) |> 
+  sd()
+
+# Calculate D-Score
+d_score <- (mean2 - mean1) / sd_rt
+
+# Sanity Check
+if (d_score < -2 || d_score > 2) {
+  warning("D score is outside the expected range of -2 to +2. Revise the scoring implementation.")
+}
+
+```
+
+## Exclude participants IAT
+  - Create an exclusion variable and set participants with incomplete trial level IAT data to "exclude". Specifically, IAT should have 120 trials on the critical test blocks (i.e., blocks 3, 4, 6 and 7). Trials on the other (practice) blocks can be discarded.
+```{r}
+# exclude participant with less than 120 trials
+dat_iat_completeness <- dat_iat |> 
+  group_by(unique_id) |> 
+  count() |> 
+  ungroup() |>
+  mutate(exclude_iat_completeness = ifelse(n == 120, "include", "exclude")) |>
+  select(-n)
+
+
+# exclude participants wiht trial reaction less than 300
+dat_iat_performance_mseconds <- dat_iat |> 
+  mutate(latency_prob = if_else(trial_reaction_time_in_ms < 300, TRUE, FALSE)) |>
+  group_by(unique_id) |> 
+  summarize(proportion_fast_trials_iat = mean(latency_prob)) |> 
+  mutate(exclude_iat_msseconds = ifelse(proportion_fast_trials_iat > 0.10,
+                                        "exclude", "include")) |> 
+  select(-proportion_fast_trials_iat)
+  
+
+#exclude participants with less than 75% accuracy
+dat_iat_performance_accuracy <- dat_iat |>
+  group_by(unique_id) |> 
+  summarise(mean_performance_accuracy = mean(trial_correct)) |> 
+  mutate(exclude_iat_accuracy = ifelse(mean_performance_accuracy < 0.75,
+                                        "exclude", "include")) |> 
+  select(-mean_performance_accuracy)
+  
+  
+```
+
+ 
+# Combine dataframes
+- Combine the demographics, BFI, and IAT data into one data frame. This data frame should be one-row-one-participant. Both the mean scored and item level BFI data should be present in the dataset.
+```{r}
+# left join demographics at the end so only the demographics of participants who filled out everything will be included. 
+data_processed_before_exlusions <- dat_bfi_scores_completness |> 
+  full_join(dat_bfi_participant_completeness, by = "unique_id") |>
+  full_join(dat_iat_completeness, by = "unique_id") |> 
+  full_join(dat_iat_performance_mseconds, by = "unique_id") |> 
+  full_join(dat_iat_performance_accuracy, by = "unique_id") |> 
+  full_join(dat_bfi_means, by = "unique_id") |> 
+  full_join(dat_bfi, by = "unique_id") |> 
+  left_join(dat_age_gender, by = "unique_id")
+```
+
+ 
+# Master Exlusions
+- Create a master exclude variable from the individual exclude variables. 
+```{r}
+
+data_processed <- data_processed_before_exlusions |> 
+  mutate(exclude_participant = case_when(exclude_min_max_scores == "exclude" ~ "exclude", 
+                                         sub_bfi_a == "exclude" ~ "exclude",
+                                         sub_bfi_c == "exclude" ~ "exclude",
+                                         sub_bfi_e == "exclude" ~ "exclude",
+                                         sub_bfi_o == "exclude" ~ "exclude",
+                                         sub_bfi_n == "exclude" ~ "exclude",
+                                         exclude_iat_completeness == "exclude" ~ "exclude",
+                                         exclude_iat_msseconds == "exclude" ~ "exclude",
+                                         exclude_iat_accuracy == "exclude" ~ "exclude",
+                                         TRUE ~ "include"))
+                                         
+    ```
+
+# Write to disk
+- Save the processed data to the data/processed/ folder as "data_processed.csv". 
+
+```{r}
+
+# in case this dir doesn't exist, create it
+dir.create("../data/processed/")
+
+# save data to disk in that dir
+write_csv(data_processed, "../data/processed/data_processed.csv")
+
 ```
 
 
 
+# Create codebook template for the processed data
+- Create a codebook for the processed data file that explains what each variable represents.
 
-
-
+```{r}
+if(!file.exists("../data/processed/data_processed_codebook.xlsx")){
+  # convert the column names to a df
+  codebook_template <- data.frame(variable = colnames(data_processed)) |>
+    mutate(explanation = NA)
+  # write to disk as an excel file
+  openxlsx::write.xlsx(codebook_template, file = "../data/processed/data_processed_codebook.xlsx")
+}
+```
 
 
 
