@@ -32,6 +32,7 @@ library(knitr)
 library(kableExtra)
 library(janitor)
 library(scales)
+library(psych)
 
 ```
 
@@ -47,3 +48,131 @@ data_processed <- read_csv("../data/processed/data_processed.csv")
 #  filter(exclude_participant == "include")
 
 ```
+# Table with and without exclusions
+## Table before exlusions
+```{r}
+data_processed |>
+  count(name = "n") |>
+  kable() |>
+  add_header_above(header = c("Whole sample" = 1)) |> # note that you can add header rows to tables like this. The "1" indicates the number of columns the header should span. The sum of these numbers must equal the number of columns or you'll get an error.
+  kable_classic(full_width = FALSE)
+
+```
+# Table after exclusion
+```{r}
+
+data_processed_after_exclusion <- data_processed |> 
+    filter(exclude_participant == "include")
+
+data_processed_after_exclusion |>
+  count(name = "n") |>
+  kable() |>
+  add_header_above(header = c("Sample after exclusions" = 1)) |> # note that you can add header rows to tables like this. The "1" indicates the number of columns the header should span. The sum of these numbers must equal the number of columns or you'll get an error.
+  kable_classic(full_width = FALSE)
+
+```
+
+# Demographics
+- Create demographics tables that summarise the mean and SD age, and the frequency and percentage of men vs women in the sample. Report the proportion of participants for which each demographics variable was available.
+```{r}
+# Age and SD Age
+data_processed_after_exclusion |>
+  mutate(age = as.numeric(age)) |>
+  summarise(Mean = mean(age, na.rm = TRUE),
+            SD = sd(age, na.rm = TRUE)) |>
+  mutate_all(.funs = janitor::round_half_up, digits = 1) |>
+  kable() |>
+  add_header_above(header = c("Age" = 2)) |>
+  kable_classic(full_width = FALSE)
+
+# Frequency and percentage of men vs. women
+data_processed_after_exclusion |> 
+  count(gender) |> 
+  mutate(percentage_gender = (n / sum(n) * 100)) |>
+  mutate(percentage_gender = janitor::round_half_up(percentage_gender, digits = 2)) |> 
+  kable(col.names = c("Gender", "Frequency", "Percentage Gender")) |> 
+  kable_classic(full_width = FALSE)
+
+# Proportion of demographics available
+data_processed_after_exclusion |>
+  summarise(proportion_age = sum())
+
+
+data_processed_after_exclusion |> 
+  summarise(proportion_with_age_info = sum(age != "not indicated") / n(),
+            proportion_with_gender_info = sum(gender != "not indicated") / n()) |>
+  mutate_all(.funs = janitor::round_half_up, digits = 2) |> 
+  kable(col.names = c("Proportion with age info", "Proportion with gender info")) |> 
+  kable_classic(full_width = FALSE)
+```
+# Cronbach's Alpha
+- Calculate Cronbach's alpha for each of the BFI subscales.
+```{r}
+alpha_bfi_agreeableness <- data_processed_after_exclusion |> 
+  select(starts_with(c("bfi_a"))) |> 
+  alpha()
+  
+alpha_bfi_conscientiousness <- data_processed_after_exclusion |> 
+  select(starts_with(c("bfi_c"))) |> 
+  alpha()
+
+alpha_bfi_extraversion <- data_processed_after_exclusion |> 
+  select(starts_with(c("bfi_e"))) |> 
+  alpha()
+
+alpha_bfi_openness <- data_processed_after_exclusion |> 
+  select(starts_with(c("bfi_o"))) |> 
+  alpha()
+
+alpha_bfi_neuroticism <- data_processed_after_exclusion |> 
+  select(starts_with(c("bfi_n"))) |> 
+  alpha()
+
+print(alpha_bfi_agreeableness)
+print(alpha_bfi_conscientiousness)
+print(alpha_bfi_extraversion)
+print(alpha_bfi_openness)
+print(alpha_bfi_neuroticism)
+```
+# Graphics
+## Histograms
+- Create series of histograms of the distribution of scores on each of the BFI subscales and the IAT.
+```{r}
+
+
+```
+
+
+## Correlation matrix 
+- Create a table with a correlation matrix of the Pearson's r correlations between the IAT and the BFI subscales rounded to two decimal places. 
+```{r}
+
+```
+
+# Test - men and women differ on their IAT scores
+- Run a t-test to test the hypothesis that men and women differ on their scores on the IAT. Report and interpret the results using {report}.
+
+```{r}
+
+```
+
+
+# Regressions
+- Run a series of regressions to test the hypotheses that each BFI subscale predicts IAT scores. Run separate regressions for each subscale rather than a multiple regression. Report and interpret the results using {report}.
+```{r}
+
+```
+
+# Scatter Plots 
+- Create series of scatter plots of how BFI subscale scores predict IAT scores. Add regression lines. These plots therefore illustrate the same results as the regressions above. Make the plots presentable and publication quality- you may decide the details of this with one exception: Extreme scores on the IAT (defined as participants whose scores in the top and bottom 10% of IAT scores) should use a triangular shape rather than a dot. A single combined plot should be created, containing 5 component plots, with the personality facet being examined in each clearly labelled. This plot should be printed in the html file but also saved to disk as both png/pdf. 
+```{r}
+
+```
+
+# Combine plots
+- Combine these scatter plots into one ggplot object using {patchwork} and print the combined plot in your .Rmd and .html. Save the combined plot to disk as a .pdf and .png in the "communications" folder.
+```{r}
+
+```
+
+
