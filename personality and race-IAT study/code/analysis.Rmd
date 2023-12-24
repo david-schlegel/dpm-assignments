@@ -33,6 +33,7 @@ library(kableExtra)
 library(janitor)
 library(scales)
 library(psych)
+library(ggplot2)
 
 ```
 
@@ -134,11 +135,117 @@ print(alpha_bfi_extraversion)
 print(alpha_bfi_openness)
 print(alpha_bfi_neuroticism)
 ```
-# Graphics
-## Histograms
+# Descriptives
+## BFI
 - Create series of histograms of the distribution of scores on each of the BFI subscales and the IAT.
 ```{r}
+# extract the data and put it into a long dataset
+data_processed_after_exclusion_long_bfi <- data_processed_after_exclusion %>%
+  select(unique_id, starts_with("bfi")) %>% 
+  pivot_longer(cols = starts_with("bfi"), names_to = "subscales", values_to = "score") %>% 
+  drop_na()
 
+# Agreeableness
+data_processed_bfi_histogramm <- data_processed_after_exclusion_long_bfi |> 
+  filter(subscales %in% grep("bfi_a", subscales, value = TRUE)) 
+
+ggplot(data_processed_bfi_histogramm, aes(x = score, fill = subscales)) +
+  geom_histogram(binwidth = 1, boundary = 0,
+                 fill = viridis_pal(begin = 0.5, option = "viridis")(1), 
+                 color = viridis_pal(begin = 0.6, option = "viridis")(1)) + 
+  facet_wrap(~ subscales, scales = "free") +
+  xlab("Score") +
+  ylab("Frequency") +
+  theme_linedraw() +
+  scale_x_continuous(breaks = pretty_breaks(n = 7)) +
+  coord_cartesian(xlim = c(1, 6)) +
+  theme(panel.grid.minor = element_blank()) +
+  labs(title = "Subscale Agreeableness")
+
+# Conscientiousness
+data_processed_bfi_histogramm <- data_processed_after_exclusion_long_bfi |> 
+  filter(subscales %in% grep("bfi_c", subscales, value = TRUE)) 
+
+ggplot(data_processed_bfi_histogramm, aes(x = score, fill = subscales)) +
+  geom_histogram(binwidth = 1, boundary = 0,
+                 fill = viridis_pal(begin = 0.5, option = "viridis")(1), 
+                 color = viridis_pal(begin = 0.6, option = "viridis")(1)) + 
+  facet_wrap(~ subscales, scales = "free") +
+  xlab("Score") +
+  ylab("Frequency") +
+  theme_linedraw() +
+  scale_x_continuous(breaks = pretty_breaks(n = 7)) +
+  coord_cartesian(xlim = c(1, 6)) +
+  theme(panel.grid.minor = element_blank()) +
+  labs(title = "Subscale Conscientiousness")
+
+# Extraversion
+data_processed_bfi_histogramm <- data_processed_after_exclusion_long_bfi |> 
+  filter(subscales %in% grep("bfi_e", subscales, value = TRUE)) 
+
+ggplot(data_processed_bfi_histogramm, aes(x = score, fill = subscales)) +
+  geom_histogram(binwidth = 1, boundary = 0,
+                 fill = viridis_pal(begin = 0.5, option = "viridis")(1), 
+                 color = viridis_pal(begin = 0.6, option = "viridis")(1)) + 
+  facet_wrap(~ subscales, scales = "free") +
+  xlab("Score") +
+  ylab("Frequency") +
+  theme_linedraw() +
+  scale_x_continuous(breaks = pretty_breaks(n = 7)) +
+  coord_cartesian(xlim = c(1, 6)) +
+  theme(panel.grid.minor = element_blank()) +
+  labs(title = "Subscale Extraversion")
+
+# Openness
+data_processed_bfi_histogramm <- data_processed_after_exclusion_long_bfi |> 
+  filter(subscales %in% grep("bfi_o", subscales, value = TRUE)) 
+
+ggplot(data_processed_bfi_histogramm, aes(x = score, fill = subscales)) +
+  geom_histogram(binwidth = 1, boundary = 0,
+                 fill = viridis_pal(begin = 0.5, option = "viridis")(1), 
+                 color = viridis_pal(begin = 0.6, option = "viridis")(1)) + 
+  facet_wrap(~ subscales, scales = "free") +
+  xlab("Score") +
+  ylab("Frequency") +
+  theme_linedraw() +
+  scale_x_continuous(breaks = pretty_breaks(n = 7)) +
+  coord_cartesian(xlim = c(1, 6)) +
+  theme(panel.grid.minor = element_blank()) +
+  labs(title = "Subscale Openness")
+
+# Neuroticism
+data_processed_bfi_histogramm <- data_processed_after_exclusion_long_bfi |> 
+  filter(subscales %in% grep("bfi_n", subscales, value = TRUE)) 
+
+ggplot(data_processed_bfi_histogramm, aes(x = score, fill = subscales)) +
+  geom_histogram(binwidth = 1, boundary = 0,
+                 fill = viridis_pal(begin = 0.5, option = "viridis")(1), 
+                 color = viridis_pal(begin = 0.6, option = "viridis")(1)) + 
+  facet_wrap(~ subscales, scales = "free") +
+  xlab("Score") +
+  ylab("Frequency") +
+  theme_linedraw() +
+  scale_x_continuous(breaks = pretty_breaks(n = 7)) +
+  coord_cartesian(xlim = c(1, 6)) +
+  theme(panel.grid.minor = element_blank()) +
+  labs(title = "Subscale Neuroticism")
+
+```
+
+## IAT
+```{r}
+data_processed_after_exclusion |> 
+  ggplot(aes(x = iat_d_score)) +
+  geom_histogram(binwidth = 0.05,
+                 fill = viridis_pal(begin = 0.8, option = "viridis")(1), 
+                 color = viridis_pal(begin = 0.85, option = "viridis")(1)) + 
+  xlab("D-score") +
+  ylab("Frequency") +
+  theme_linedraw() +
+  scale_x_continuous(breaks = pretty_breaks(n = 7)) +
+  theme(panel.grid.minor = element_blank()) +
+  labs(title = "D-Score IAT")
+  
 
 ```
 
@@ -146,7 +253,12 @@ print(alpha_bfi_neuroticism)
 ## Correlation matrix 
 - Create a table with a correlation matrix of the Pearson's r correlations between the IAT and the BFI subscales rounded to two decimal places. 
 ```{r}
+cor_matrix <- data_processed_after_exclusion |> 
+  select(starts_with("mean_bfi"), iat_d_score) |> 
+  cor(use = "pairwise.complete.obs", method = "pearson") |> 
+  round(2)
 
+print(cor_matrix)
 ```
 
 # Test - men and women differ on their IAT scores

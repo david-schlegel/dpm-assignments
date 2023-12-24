@@ -220,8 +220,7 @@ There are no FALSE means which are smaller than 1 or greater than 6.
 
 # IAT 
 ## Scoring
-- Mean-score the subscales of the BFI scale. Each participant only got either 2 or 3 subscales. 
-  - Check that the mean scores do not violate the min and max possible score (i.e., first determine this min and max score), and revise your scoring code if it does. 
+- Score the trial-level IAT data using the Greenwald "D" score: Calculate a mean RT ("mean1") for blocks 3 and 6 (one score using trials from both blocks), a mean RT ("mean2") for blocks 4 and 7 (one score using trials from both blocks), and the SD of RTs in blocks 3, 4, 6 and 7 ("SD"). To calculate D: D = (mean2 - mean1)/SD. Blocks 1, 2, and 5 are practice blocks and must be discarded. 
 ```{r}
 dat_iat <- data_iat_raw |>
   # code correct and incorrect to 1 and 0
@@ -231,29 +230,25 @@ dat_iat <- data_iat_raw |>
   filter(!block_number %in% c(1, 2, 5)) 
 
 # Calculations of mean and sd
-mean1 <- dat_iat |> 
-  filter(block_number %in% c(3, 6)) |> 
-  pull(trial_correct) |> 
-  mean()
-         
-mean2 <- dat_iat |> 
-  filter(block_number %in% c(4, 7)) |> 
-  pull(trial_correct) |> 
-  mean()
+dat_iat_d_scores <- dat_iat |> 
+  group_by(unique_id) |> 
+  summarise(mean1 = mean(trial_correct[block_number %in% c(3, 6)]),
+            mean2 = mean(trial_correct[block_number %in% c(4, 7)]),
+            sd_rt = sd(trial_correct),
+            # If sd is 0, then the formula is undefined. It is only 0 if all values are the same, either 0 or 1. D then is 0. 
+            iat_d_score = ifelse(sd_rt == 0, 0, (mean2 - mean1) / sd_rt)) |>
+  select(unique_id, iat_d_score)
 
-sd_rt <- dat_iat |> 
-  pull(trial_correct) |> 
-  sd()
-
-# Calculate D-Score
-d_score <- (mean2 - mean1) / sd_rt
 
 # Sanity Check
-if (d_score < -2 || d_score > 2) {
-  warning("D score is outside the expected range of -2 to +2. Revise the scoring implementation.")
+if (any(dat_iat_d_scores$iat_d_score < -2, na.rm = TRUE) || any(dat_iat_d_scores$iat_d_score > 2, na.rm = TRUE)) {
+  warning("At least one D score is outside the expected range of -2 to +2. Revise the scoring implementation.")
 }
 
 ```
+
+
+
 
 ## Exclude participants IAT
   - Create an exclusion variable and set participants with incomplete trial level IAT data to "exclude". Specifically, IAT should have 120 trials on the critical test blocks (i.e., blocks 3, 4, 6 and 7). Trials on the other (practice) blocks can be discarded.
@@ -300,6 +295,7 @@ data_processed_before_exlusions <- dat_bfi_scores_completness |>
   full_join(dat_iat_performance_accuracy, by = "unique_id") |> 
   full_join(dat_bfi_means, by = "unique_id") |> 
   full_join(dat_bif_recoded, by = "unique_id") |> 
+  full_join(dat_iat_d_scores, by = "unique_id") |> 
   left_join(dat_age_gender, by = "unique_id")
 ```
 
