@@ -34,6 +34,9 @@ library(janitor)
 library(scales)
 library(psych)
 library(ggplot2)
+library(easystats)
+library(wesanderson)
+library(patchwork)
 
 ```
 
@@ -68,7 +71,7 @@ data_processed_after_exclusion <- data_processed |>
 data_processed_after_exclusion |>
   count(name = "n") |>
   kable() |>
-  add_header_above(header = c("Sample after exclusions" = 1)) |> # note that you can add header rows to tables like this. The "1" indicates the number of columns the header should span. The sum of these numbers must equal the number of columns or you'll get an error.
+  add_header_above(header = c("Sample after exclusions" = 1)) |> 
   kable_classic(full_width = FALSE)
 
 ```
@@ -87,12 +90,14 @@ data_processed_after_exclusion |>
   kable_classic(full_width = FALSE)
 
 # Frequency and percentage of men vs. women
-data_processed_after_exclusion |> 
+data_processed_after_exclusion |>
   count(gender) |> 
-  mutate(percentage_gender = (n / sum(n) * 100)) |>
-  mutate(percentage_gender = janitor::round_half_up(percentage_gender, digits = 2)) |> 
+  mutate(percentage_gender = (n / sum(n) * 100), 
+         percentage_gender = janitor::round_half_up(percentage_gender, digits = 2), 
+         gender = str_to_title(gender)) |>
   kable(col.names = c("Gender", "Frequency", "Percentage Gender")) |> 
   kable_classic(full_width = FALSE)
+
 
 # Proportion of demographics available
 data_processed_after_exclusion |>
@@ -101,9 +106,10 @@ data_processed_after_exclusion |>
 
 data_processed_after_exclusion |> 
   summarise(proportion_with_age_info = sum(age != "not indicated") / n(),
-            proportion_with_gender_info = sum(gender != "not indicated") / n()) |>
-  mutate_all(.funs = janitor::round_half_up, digits = 2) |> 
-  kable(col.names = c("Proportion with age info", "Proportion with gender info")) |> 
+            proportion_with_gender_info = sum(gender != "not indicated") / n()) |> 
+  mutate(across(everything(), ~janitor::round_half_up(., digits = 2))) |> 
+  kable(col.names = c("Age", "Gender")) |> 
+  add_header_above(c("Proportion provided" = 2)) |> 
   kable_classic(full_width = FALSE)
 ```
 # Cronbach's Alpha
@@ -139,98 +145,41 @@ print(alpha_bfi_neuroticism)
 ## BFI
 - Create series of histograms of the distribution of scores on each of the BFI subscales and the IAT.
 ```{r}
-# extract the data and put it into a long dataset
-data_processed_after_exclusion_long_bfi <- data_processed_after_exclusion %>%
+# Transform data
+dat_long_bfi <- data_processed_after_exclusion %>%
   select(unique_id, starts_with("bfi")) %>% 
   pivot_longer(cols = starts_with("bfi"), names_to = "subscales", values_to = "score") %>% 
   drop_na()
 
-# Agreeableness
-data_processed_bfi_histogramm <- data_processed_after_exclusion_long_bfi |> 
-  filter(subscales %in% grep("bfi_a", subscales, value = TRUE)) 
+# Function to create histograms, so if I need changes I don't have to change it 5 times. 
+plot_histogram_for_subscale <- function(subscale_prefix, title) {
+  data_processed_bfi_histogramm <- dat_long_bfi |> 
+    filter(str_detect(subscales, subscale_prefix))
+  
+  ggplot(data_processed_bfi_histogramm, aes(x = score, fill = subscales)) +
+    geom_histogram(binwidth = 1, boundary = 0,
+                   fill = viridis_pal(begin = 0.5, option = "viridis")(1), 
+                   color = viridis_pal(begin = 0.6, option = "viridis")(1)) + 
+    facet_wrap(~ subscales, scales = "free") +
+    xlab("Score") +
+    ylab("Frequency") +
+    theme_linedraw() +
+    scale_x_continuous(breaks = pretty_breaks(n = 7)) +
+    coord_cartesian(xlim = c(1, 6)) +
+    theme(panel.grid.minor = element_blank()) +
+    labs(title = title)
+}
 
-ggplot(data_processed_bfi_histogramm, aes(x = score, fill = subscales)) +
-  geom_histogram(binwidth = 1, boundary = 0,
-                 fill = viridis_pal(begin = 0.5, option = "viridis")(1), 
-                 color = viridis_pal(begin = 0.6, option = "viridis")(1)) + 
-  facet_wrap(~ subscales, scales = "free") +
-  xlab("Score") +
-  ylab("Frequency") +
-  theme_linedraw() +
-  scale_x_continuous(breaks = pretty_breaks(n = 7)) +
-  coord_cartesian(xlim = c(1, 6)) +
-  theme(panel.grid.minor = element_blank()) +
-  labs(title = "Subscale Agreeableness")
+# individual titles for histograms
+titles <- c("Agreeableness", "Conscientiousness", "Extraversion", "Openness", "Neuroticism")
+subscale_prefixes <- c("bfi_a", "bfi_c", "bfi_e", "bfi_o", "bfi_n")
 
-# Conscientiousness
-data_processed_bfi_histogramm <- data_processed_after_exclusion_long_bfi |> 
-  filter(subscales %in% grep("bfi_c", subscales, value = TRUE)) 
+# Plots
+plots <- Map(plot_histogram_for_subscale, subscale_prefixes, titles)
 
-ggplot(data_processed_bfi_histogramm, aes(x = score, fill = subscales)) +
-  geom_histogram(binwidth = 1, boundary = 0,
-                 fill = viridis_pal(begin = 0.5, option = "viridis")(1), 
-                 color = viridis_pal(begin = 0.6, option = "viridis")(1)) + 
-  facet_wrap(~ subscales, scales = "free") +
-  xlab("Score") +
-  ylab("Frequency") +
-  theme_linedraw() +
-  scale_x_continuous(breaks = pretty_breaks(n = 7)) +
-  coord_cartesian(xlim = c(1, 6)) +
-  theme(panel.grid.minor = element_blank()) +
-  labs(title = "Subscale Conscientiousness")
-
-# Extraversion
-data_processed_bfi_histogramm <- data_processed_after_exclusion_long_bfi |> 
-  filter(subscales %in% grep("bfi_e", subscales, value = TRUE)) 
-
-ggplot(data_processed_bfi_histogramm, aes(x = score, fill = subscales)) +
-  geom_histogram(binwidth = 1, boundary = 0,
-                 fill = viridis_pal(begin = 0.5, option = "viridis")(1), 
-                 color = viridis_pal(begin = 0.6, option = "viridis")(1)) + 
-  facet_wrap(~ subscales, scales = "free") +
-  xlab("Score") +
-  ylab("Frequency") +
-  theme_linedraw() +
-  scale_x_continuous(breaks = pretty_breaks(n = 7)) +
-  coord_cartesian(xlim = c(1, 6)) +
-  theme(panel.grid.minor = element_blank()) +
-  labs(title = "Subscale Extraversion")
-
-# Openness
-data_processed_bfi_histogramm <- data_processed_after_exclusion_long_bfi |> 
-  filter(subscales %in% grep("bfi_o", subscales, value = TRUE)) 
-
-ggplot(data_processed_bfi_histogramm, aes(x = score, fill = subscales)) +
-  geom_histogram(binwidth = 1, boundary = 0,
-                 fill = viridis_pal(begin = 0.5, option = "viridis")(1), 
-                 color = viridis_pal(begin = 0.6, option = "viridis")(1)) + 
-  facet_wrap(~ subscales, scales = "free") +
-  xlab("Score") +
-  ylab("Frequency") +
-  theme_linedraw() +
-  scale_x_continuous(breaks = pretty_breaks(n = 7)) +
-  coord_cartesian(xlim = c(1, 6)) +
-  theme(panel.grid.minor = element_blank()) +
-  labs(title = "Subscale Openness")
-
-# Neuroticism
-data_processed_bfi_histogramm <- data_processed_after_exclusion_long_bfi |> 
-  filter(subscales %in% grep("bfi_n", subscales, value = TRUE)) 
-
-ggplot(data_processed_bfi_histogramm, aes(x = score, fill = subscales)) +
-  geom_histogram(binwidth = 1, boundary = 0,
-                 fill = viridis_pal(begin = 0.5, option = "viridis")(1), 
-                 color = viridis_pal(begin = 0.6, option = "viridis")(1)) + 
-  facet_wrap(~ subscales, scales = "free") +
-  xlab("Score") +
-  ylab("Frequency") +
-  theme_linedraw() +
-  scale_x_continuous(breaks = pretty_breaks(n = 7)) +
-  coord_cartesian(xlim = c(1, 6)) +
-  theme(panel.grid.minor = element_blank()) +
-  labs(title = "Subscale Neuroticism")
-
+print(plots)
 ```
+
 
 ## IAT
 ```{r}
@@ -265,7 +214,13 @@ print(cor_matrix)
 - Run a t-test to test the hypothesis that men and women differ on their scores on the IAT. Report and interpret the results using {report}.
 
 ```{r}
+dat_iat_gender <- data_processed_after_exclusion |> 
+  select(iat_d_score, gender) |> 
+  filter(gender != "not indicated")
 
+ttest_iat_gender <- t.test(iat_d_score ~ gender, data = dat_iat_gender)
+
+report(ttest_iat_gender)
 ```
 
 
@@ -273,18 +228,130 @@ print(cor_matrix)
 - Run a series of regressions to test the hypotheses that each BFI subscale predicts IAT scores. Run separate regressions for each subscale rather than a multiple regression. Report and interpret the results using {report}.
 ```{r}
 
+regression_iat_bfi_agreeableness <- lm(iat_d_score ~ mean_bfi_agreeableness, data = data_processed_after_exclusion)
+
+regression_iat_bfi_conscientiousness <- lm(iat_d_score ~ mean_bfi_conscientiousness, data = data_processed_after_exclusion)
+
+regression_iat_bfi_extraversion <- lm(iat_d_score ~ mean_bfi_extraversion, data = data_processed_after_exclusion)
+
+regression_iat_bfi_openness <- lm(iat_d_score ~ mean_bfi_openness, data = data_processed_after_exclusion)
+
+regression_iat_bfi_neuroticism <- lm(iat_d_score ~ mean_bfi_neuroticism, data = data_processed_after_exclusion)
+
+report(regression_iat_bfi_agreeableness)
+report(regression_iat_bfi_conscientiousness)
+report(regression_iat_bfi_extraversion)
+report(regression_iat_bfi_openness)
+report(regression_iat_bfi_neuroticism)
+
 ```
 
 # Scatter Plots 
 - Create series of scatter plots of how BFI subscale scores predict IAT scores. Add regression lines. These plots therefore illustrate the same results as the regressions above. Make the plots presentable and publication quality- you may decide the details of this with one exception: Extreme scores on the IAT (defined as participants whose scores in the top and bottom 10% of IAT scores) should use a triangular shape rather than a dot. A single combined plot should be created, containing 5 component plots, with the personality facet being examined in each clearly labelled. This plot should be printed in the html file but also saved to disk as both png/pdf. 
+
 ```{r}
+
+data_processed_after_exclusion <- data_processed_after_exclusion |> 
+  mutate(extreme_scores_iat = ifelse(iat_d_score > quantile(iat_d_score, 0.9) | iat_d_score < quantile(iat_d_score, 0.1), "Extreme", "Not extreme"))
+
+# to longer
+dat_scatterplots <- data_processed_after_exclusion |> 
+  select(unique_id, starts_with(c("mean_bfi")), iat_d_score, extreme_scores_iat) |> 
+  pivot_longer(cols = starts_with("mean_bfi"), names_to = "subscales", values_to = "score")
+
+# Load colors
+wes_palette <- wes_palette("Zissou1", n = 5, type = "continuous")
+
+# Function to create the scatterplot
+create_scatterplot <- function(data, subscale, title) {
+  data |> 
+    filter(subscales == subscale) |> 
+    ggplot(aes(x = score, y = iat_d_score)) + 
+      geom_point(aes(color = extreme_scores_iat, shape = extreme_scores_iat)) + 
+      geom_smooth(method = "lm", se = FALSE, aes(group = 1), color = wes_palette[3]) +
+      scale_color_manual(values = c("Extreme" = wes_palette[2], "Not extreme" = wes_palette[1]),
+                         name = "IAT-Score classification",
+                         labels = c("Top/bottom 10% quantil", "10%-90% quantil")) +
+    theme_light() + 
+    labs(x = "BFI Score", y = "IAT Score",
+         title = title, 
+         color = "IAT Score Category", shape = "IAT Score Category") +
+    theme(axis.text = element_text(size = 10),
+      axis.title = element_text(size = 8),
+      plot.title = element_text(size = 10)) +
+    scale_shape_manual(values = c("Extreme" = 17, "Not extreme" = 16),
+                       name = "IAT-Score classification",
+                       labels = c("Top/bottom 10% quantil", "10%-90% quantil"))
+}
+
+# Agreeableness Plot
+p1_a <- create_scatterplot(dat_scatterplots, "mean_bfi_agreeableness", "Agreeableness")
+
+# Conscientiousness Plot
+p2_c <- create_scatterplot(dat_scatterplots, "mean_bfi_conscientiousness", "Conscientiousness")
+
+# Extraversion Plot
+p3_e <- create_scatterplot(dat_scatterplots, "mean_bfi_extraversion", "Extraversion")
+
+# Extraversion Plot
+p4_o <- create_scatterplot(dat_scatterplots, "mean_bfi_openness", "Openness")
+
+# Extraversion Plot
+p5_n <- create_scatterplot(dat_scatterplots, "mean_bfi_neuroticism", "Neuroticism")
+```
+
+```{r}
+
+# Faccetted Plots
+my_labeller <- as_labeller(c(
+  mean_bfi_agreeableness = "Agreeableness",
+  mean_bfi_conscientiousness = "Conscientiousness",
+  mean_bfi_extraversion = "Extraversion",
+  mean_bfi_openness = "Openness",
+  mean_bfi_neuroticism = "Neuroticism"
+))
+
+
+
+ggplot(dat_scatterplots, aes(x = score, y = iat_d_score)) + 
+  geom_point(aes(color = extreme_scores_iat, shape = extreme_scores_iat)) + 
+  geom_smooth(method = "lm", se = FALSE, aes(group = 1), color = wes_palette[3]) +
+  scale_color_manual(
+    values = c("Extreme" = wes_palette[2], "Not extreme" = wes_palette[1]),
+    name = "IAT-Score classification",
+    labels = c("Top/bottom 10% quantil", "10%-90% quantil")) +
+  facet_wrap(~subscales, scales = "free", labeller = my_labeller) +
+  theme_light() + 
+  labs(x = "BFI Subscale Score", y = "IAT Score",
+       title = "Predicting IAT Scores from Personality Subscales",
+       subtitle = "A Visualization of Multiple Linear Regressions",
+       color = "IAT Score Category", shape = "IAT Score Category") +
+  scale_shape_manual(
+    values = c("Extreme" = 17, "Not extreme" = 16),
+    name = "IAT-Score classification",
+    labels = c("Top/bottom 10% quantil", "10%-90% quantil")) +
+  theme(legend.position = c(0.98, 0.1),
+        legend.justification = c("right", "bottom"))
+
+ggsave("../communication/scatterplot_bfi_iat.png")
+ggsave("../communication/scatterplot_bfi_iat.pdf",  device = cairo_pdf, width = 10, height = 8)
+
 
 ```
 
 # Combine plots
 - Combine these scatter plots into one ggplot object using {patchwork} and print the combined plot in your .Rmd and .html. Save the combined plot to disk as a .pdf and .png in the "communications" folder.
 ```{r}
+combined_plot <- p1_a + p2_c + p3_e + p4_o + p5_n + guide_area() + plot_layout(guides = 'collect')
 
+combined_plot <- combined_plot + plot_annotation(
+  title = "Predicting IAT Scores from Personality Subscales",
+  subtitle = "A Visualization of Multiple Linear Regressions")
+
+print(combined_plot)
+
+ggsave("../communication/combined_plot.png")
+ggsave("../communication/combined_plot.pdf", device = cairo_pdf, width = 10, height = 8)
 ```
 
 

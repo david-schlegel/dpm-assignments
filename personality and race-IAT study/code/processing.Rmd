@@ -133,7 +133,7 @@ sanity_check_bfi_scale(dat_bif_recoded, sub_bfi_n)
   - Check that the item level data does not violate the logical minimum and maximum scores (1 to 6). Create an exclusion variable and set participants with impossible data to "exclude".
 ```{r}
 
-dat_bfi_scores_completness <- dat_bif_recoded |>
+dat_bfi_scores_completeness <- dat_bif_recoded |>
   rowwise() |>
   mutate(exclude_min_max_scores = if_else(any((c_across(starts_with("bfi")) < 1 | 
                                          c_across(starts_with("bfi")) > 6),
@@ -169,12 +169,12 @@ check_bfi_scale <- function(data, columns, threshold, col_name) {
 
 
 dat_bfi_participant_completeness <- dat_bif_recoded |>  
-  check_bfi_scale(sub_bfi_a, 9, "sub_bfi_a") |>  
-  check_bfi_scale(sub_bfi_c, 9, "sub_bfi_c") |>
-  check_bfi_scale(sub_bfi_e, 8, "sub_bfi_e") |>
-  check_bfi_scale(sub_bfi_o, 10, "sub_bfi_o") |> 
-  check_bfi_scale(sub_bfi_n, 8, "sub_bfi_n") |> 
-  select(unique_id, c(starts_with("sub_bfi_")))
+  check_bfi_scale(sub_bfi_a, 9, "exclude_sub_bfi_agreeablenes") |>  
+  check_bfi_scale(sub_bfi_c, 9, "exclude_sub_bfi_conscientiousness") |>
+  check_bfi_scale(sub_bfi_e, 8, "exclude_sub_bfi_extraversion") |>
+  check_bfi_scale(sub_bfi_o, 10, "exclude_sub_bfi_openness") |> 
+  check_bfi_scale(sub_bfi_n, 8, "exclude_sub_bfi_neuroticism") |> 
+  select(unique_id, c(starts_with("exclude")))
 
 ```
 
@@ -184,11 +184,11 @@ dat_bfi_participant_completeness <- dat_bif_recoded |>
 ```{r}
 
 dat_bfi_means <- dat_bfi |> 
-  mutate(mean_bfi_a = rowMeans(select(dat_bif_recoded, all_of(sub_bfi_a))),
-         mean_bfi_c = rowMeans(select(dat_bif_recoded, all_of(sub_bfi_c))), 
-         mean_bfi_e = rowMeans(select(dat_bif_recoded, all_of(sub_bfi_e))), 
-         mean_bfi_n = rowMeans(select(dat_bif_recoded, all_of(sub_bfi_o))),
-         mean_bfi_o = rowMeans(select(dat_bif_recoded, all_of(sub_bfi_n)))) |> 
+  mutate(mean_bfi_agreeableness = rowMeans(select(dat_bif_recoded, all_of(sub_bfi_a))),
+         mean_bfi_conscientiousness = rowMeans(select(dat_bif_recoded, all_of(sub_bfi_c))), 
+         mean_bfi_extraversion = rowMeans(select(dat_bif_recoded, all_of(sub_bfi_e))), 
+         mean_bfi_neuroticism = rowMeans(select(dat_bif_recoded, all_of(sub_bfi_o))),
+         mean_bfi_openness = rowMeans(select(dat_bif_recoded, all_of(sub_bfi_n)))) |> 
   select(unique_id, starts_with("mean_bfi"))
 
 # As the values are between 1 and 6 the mean can only be between 1 and six. 
@@ -200,11 +200,11 @@ check_mean_score_range <- function(mean_score) {
 }
 
 check_values <- c(
-  check_mean_score_range(dat_bfi_means$mean_bfi_a),
-  check_mean_score_range(dat_bfi_means$mean_bfi_c),
-  check_mean_score_range(dat_bfi_means$mean_bfi_e),
-  check_mean_score_range(dat_bfi_means$mean_bfi_n),
-  check_mean_score_range(dat_bfi_means$mean_bfi_o)
+  check_mean_score_range(dat_bfi_means$mean_bfi_agreeableness),
+  check_mean_score_range(dat_bfi_means$mean_bfi_conscientiousness),
+  check_mean_score_range(dat_bfi_means$mean_bfi_extraversion),
+  check_mean_score_range(dat_bfi_means$mean_bfi_neuroticism),
+  check_mean_score_range(dat_bfi_means$mean_bfi_openness)
 )
 
 # number of true and false. 
@@ -288,7 +288,7 @@ dat_iat_performance_accuracy <- dat_iat |>
 - Combine the demographics, BFI, and IAT data into one data frame. This data frame should be one-row-one-participant. Both the mean scored and item level BFI data should be present in the dataset.
 ```{r}
 # left join demographics at the end so only the demographics of participants who filled out everything will be included. 
-data_processed_before_exlusions <- dat_bfi_scores_completness |> 
+data_processed_before_exlusions <- dat_bfi_scores_completeness |> 
   full_join(dat_bfi_participant_completeness, by = "unique_id") |>
   full_join(dat_iat_completeness, by = "unique_id") |> 
   full_join(dat_iat_performance_mseconds, by = "unique_id") |> 
@@ -306,11 +306,11 @@ data_processed_before_exlusions <- dat_bfi_scores_completness |>
 
 data_processed <- data_processed_before_exlusions |> 
   mutate(exclude_participant = case_when(exclude_min_max_scores == "exclude" ~ "exclude", 
-                                         sub_bfi_a == "exclude" ~ "exclude",
-                                         sub_bfi_c == "exclude" ~ "exclude",
-                                         sub_bfi_e == "exclude" ~ "exclude",
-                                         sub_bfi_o == "exclude" ~ "exclude",
-                                         sub_bfi_n == "exclude" ~ "exclude",
+                                         exclude_sub_bfi_agreeablenes == "exclude" ~ "exclude",
+                                         exclude_sub_bfi_conscientiousness == "exclude" ~ "exclude",
+                                         exclude_sub_bfi_extraversion == "exclude" ~ "exclude",
+                                         exclude_sub_bfi_openness == "exclude" ~ "exclude",
+                                         exclude_sub_bfi_neuroticism == "exclude" ~ "exclude",
                                          exclude_iat_completeness == "exclude" ~ "exclude",
                                          exclude_iat_msseconds == "exclude" ~ "exclude",
                                          exclude_iat_accuracy == "exclude" ~ "exclude",
