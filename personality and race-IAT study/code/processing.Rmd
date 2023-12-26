@@ -48,7 +48,7 @@ data_iat_raw <- read_csv("../data/raw/data_raw_iat.csv", skip = 1) |>
 ```
 
 # Demographics
-## Extract age and gender from the raw demographics data.
+## Extract age and gender
 - Extract age and gender from the raw demographics data.
 ```{r}
 dat_age_gender <- data_demographics_raw |> 
@@ -68,7 +68,7 @@ dat_age_gender <- data_demographics_raw |>
 # Data bfi
 - Reverse score the negatively worded items: the extroversion scale items 2, 5 and 7, conscientiousness items 2, 4 5 and 9, neuroticism items 2, 5, and 7, agreeableness 1, 3, 6, and 8, and openness items 7 and 9.
 
-## Recoding Data (reverse scales)
+## Recoding Data
 
 ```{r}
 # Function to recode negatively worded items
@@ -105,7 +105,7 @@ dat_bif_recoded <- dat_bfi |>
 ```
 
 
-## Sanity Checks after recoding
+## Sanity Checks
 ### Check correlations
   - Include a sanity check that assesses whether these list of item reversals, and your implementation of them, is likely to be correct: For each subscale, create a correlation table among the items (after reversals) and check that all correlations are positive. IN general, negative correlations among items are one indication that information about item reversals, or their implementation, is not correct.  
 ```{r}
@@ -129,7 +129,7 @@ sanity_check_bfi_scale(dat_bif_recoded, sub_bfi_n)
 
 - there is one value negativ in openness, but it is close to zero and only between o7 and o10. Decision, still correct. 
 
-### Check logical minimum and maximum scores (1 to 6)
+### Check logical minimum and maximum scores
   - Check that the item level data does not violate the logical minimum and maximum scores (1 to 6). Create an exclusion variable and set participants with impossible data to "exclude".
 ```{r}
 
@@ -142,7 +142,7 @@ dat_bfi_scores_completeness <- dat_bif_recoded |>
 
 ```
 
-### Check completness of Date of each participant
+### Check completness of Data
  - Check that all participants have complete data on the BFI scales they completed. Create an exclusion variable and set participants with incomplete data to "exclude".
 
 ```{r}

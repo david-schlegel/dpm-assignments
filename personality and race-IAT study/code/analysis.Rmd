@@ -210,7 +210,7 @@ cor_matrix <- data_processed_after_exclusion |>
 print(cor_matrix)
 ```
 
-# Test - men and women differ on their IAT scores
+# T-Test Women vs. Men
 - Run a t-test to test the hypothesis that men and women differ on their scores on the IAT. Report and interpret the results using {report}.
 
 ```{r}
@@ -339,7 +339,7 @@ ggsave("../communication/scatterplot_bfi_iat.pdf",  device = cairo_pdf, width = 
 
 ```
 
-# Combine plots
+## Combine plots
 - Combine these scatter plots into one ggplot object using {patchwork} and print the combined plot in your .Rmd and .html. Save the combined plot to disk as a .pdf and .png in the "communications" folder.
 ```{r}
 combined_plot <- p1_a + p2_c + p3_e + p4_o + p5_n + guide_area() + plot_layout(guides = 'collect')

@@ -1664,7 +1664,7 @@ border-radius: 0px;
 big-5 personality facets and implicit racial attitudes</h1>
 <h3 class="subtitle">Data processing</h3>
 <h4 class="author">David Schlegel</h4>
-<h4 class="date">14 December, 2023</h4>
+<h4 class="date">26 December, 2023</h4>
 
 </div>
 
@@ -1687,13 +1687,16 @@ big-5 personality facets and implicit racial attitudes</h1>
 <span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
 <span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a></span>
 <span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co"># Implicit association test</span></span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>data_iat_raw <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">&quot;../data/raw/data_raw_iat.csv&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>data_iat_raw <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">&quot;../data/raw/data_raw_iat.csv&quot;</span>, <span class="at">skip =</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
 <span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span></code></pre></div>
 </div>
 <div id="demographics" class="section level1">
 <h1>Demographics</h1>
 <div id="extract-age-and-gender-from-the-raw-demographics-data." class="section level2">
 <h2>Extract age and gender from the raw demographics data.</h2>
+<ul>
+<li>Extract age and gender from the raw demographics data.</li>
+</ul>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>dat_age_gender <span class="ot">&lt;-</span> data_demographics_raw <span class="sc">|&gt;</span> </span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> variable,</span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>              <span class="at">values_from =</span> response) <span class="sc">|&gt;</span> </span>
@@ -1703,28 +1706,18 @@ big-5 personality facets and implicit racial attitudes</h1>
 <span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>                            <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;not indicated&quot;</span>),</span>
 <span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>         <span class="at">age =</span> <span class="fu">as.character</span>(age),</span>
 <span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>         <span class="at">age =</span> <span class="fu">case_when</span>(<span class="fu">str_detect</span>(age, <span class="st">&quot;^[0-9]+$&quot;</span>) <span class="sc">~</span> age,</span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>                         <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;not indicated&quot;</span>), </span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>         <span class="at">unique_id =</span> <span class="fu">case_when</span>(<span class="sc">!</span><span class="fu">is.na</span>(<span class="fu">as.numeric</span>(unique_id)) <span class="sc">~</span> <span class="fu">as.character</span>(unique_id),</span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>                               <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;other/missing/error&quot;</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>sex)</span></code></pre></div>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>                         <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;not indicated&quot;</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>  <span class="fu">filter</span>(unique_id <span class="sc">!=</span> <span class="fu">is.na</span>(unique_id)) <span class="sc">|&gt;</span> </span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>sex)</span></code></pre></div>
 </div>
 </div>
 <div id="data-bfi" class="section level1">
 <h1>Data bfi</h1>
 <ul>
-<li>Include a sanity check that assesses whether these list of item
-reversals, and your implementation of them, is likely to be correct: For
-each subscale, create a correlation table among the items (after
-reversals) and check that all correlations are positive. IN general,
-negative correlations among items are one indication that information
-about item reversals, or their implementation, is not correct.<br />
-</li>
-<li>Check that the item level data does not violate the logical minimum
-and maximum scores (1 to 6). Create an exclusion variable and set
-participants with impossible data to “exclude”.</li>
-<li>Check that all participants have complete data on the BFI scales
-they completed. Create an exclusion variable and set participants with
-incomplete data to “exclude”.</li>
+<li>Reverse score the negatively worded items: the extroversion scale
+items 2, 5 and 7, conscientiousness items 2, 4 5 and 9, neuroticism
+items 2, 5, and 7, agreeableness 1, 3, 6, and 8, and openness items 7
+and 9.</li>
 </ul>
 <div id="recoding-data-reverse-scales" class="section level2">
 <h2>Recoding Data (reverse scales)</h2>
@@ -1744,69 +1737,104 @@ incomplete data to “exclude”.</li>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>dat_bfi <span class="ot">&lt;-</span> data_bfi_raw <span class="sc">|&gt;</span> </span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(bfi_e2, bfi_e5, bfi_e7, bfi_c2, bfi_c4, bfi_c5, bfi_c9, bfi_n2, bfi_n5,</span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>                bfi_n7, bfi_a1, bfi_a3, bfi_a6, bfi_a8, bfi_o7, bfi_o9), <span class="sc">~</span> <span class="fu">reverse_score</span>(.), </span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>         <span class="at">.names =</span> <span class="st">&quot;{.col}_recode&quot;</span>))</span></code></pre></div>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>         <span class="at">.names =</span> <span class="st">&quot;{.col}_recode&quot;</span>))</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co"># For mitigating copy &amp; past errors build a vector with the used subscales original &amp; recoded</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>sub_bfi_a <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;bfi_a1_recode&quot;</span>, <span class="st">&quot;bfi_a2&quot;</span>, <span class="st">&quot;bfi_a3_recode&quot;</span>, <span class="st">&quot;bfi_a4&quot;</span>, <span class="st">&quot;bfi_a5&quot;</span>, <span class="st">&quot;bfi_a6_recode&quot;</span>, <span class="st">&quot;bfi_a7&quot;</span>, <span class="st">&quot;bfi_a8_recode&quot;</span>, <span class="st">&quot;bfi_a9&quot;</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>sub_bfi_c <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;bfi_c1&quot;</span>, <span class="st">&quot;bfi_c2_recode&quot;</span>, <span class="st">&quot;bfi_c3&quot;</span>, <span class="st">&quot;bfi_c4_recode&quot;</span>, <span class="st">&quot;bfi_c5_recode&quot;</span>, <span class="st">&quot;bfi_c6&quot;</span>, <span class="st">&quot;bfi_c7&quot;</span>, <span class="st">&quot;bfi_c8&quot;</span>, <span class="st">&quot;bfi_c9_recode&quot;</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>sub_bfi_e <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;bfi_e1&quot;</span>, <span class="st">&quot;bfi_e2_recode&quot;</span>, <span class="st">&quot;bfi_e3&quot;</span>, <span class="st">&quot;bfi_e4&quot;</span>, <span class="st">&quot;bfi_e5_recode&quot;</span>, <span class="st">&quot;bfi_e6&quot;</span>, <span class="st">&quot;bfi_e7_recode&quot;</span>, <span class="st">&quot;bfi_e8&quot;</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>sub_bfi_n <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;bfi_n1&quot;</span>, <span class="st">&quot;bfi_n2_recode&quot;</span>, <span class="st">&quot;bfi_n3&quot;</span>, <span class="st">&quot;bfi_n4&quot;</span>, <span class="st">&quot;bfi_n5_recode&quot;</span>, <span class="st">&quot;bfi_n6&quot;</span>, <span class="st">&quot;bfi_n7_recode&quot;</span>, <span class="st">&quot;bfi_n8&quot;</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>sub_bfi_o <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;bfi_o1&quot;</span>, <span class="st">&quot;bfi_o2&quot;</span>, <span class="st">&quot;bfi_o3&quot;</span>, <span class="st">&quot;bfi_o4&quot;</span>, <span class="st">&quot;bfi_o5&quot;</span>, <span class="st">&quot;bfi_o6&quot;</span>, <span class="st">&quot;bfi_o7_recode&quot;</span>, <span class="st">&quot;bfi_o8&quot;</span>, <span class="st">&quot;bfi_o9_recode&quot;</span>, <span class="st">&quot;bfi_o10&quot;</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>dat_bif_recoded <span class="ot">&lt;-</span> dat_bfi <span class="sc">|&gt;</span> </span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="fu">select</span>(unique_id, <span class="fu">all_of</span>(<span class="fu">c</span>(sub_bfi_a, sub_bfi_c, sub_bfi_e, sub_bfi_o, sub_bfi_n)))</span></code></pre></div>
 </div>
 <div id="sanity-checks-after-recoding" class="section level2">
 <h2>Sanity Checks after recoding</h2>
 <div id="check-correlations" class="section level3">
 <h3>Check correlations</h3>
+<ul>
+<li>Include a sanity check that assesses whether these list of item
+reversals, and your implementation of them, is likely to be correct: For
+each subscale, create a correlation table among the items (after
+reversals) and check that all correlations are positive. IN general,
+negative correlations among items are one indication that information
+about item reversals, or their implementation, is not correct.</li>
+</ul>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>sanity_check_bfi_scale <span class="ot">&lt;-</span> <span class="cf">function</span>(data, scale_columns) {</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  cor_data <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span> </span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>    <span class="fu">select</span>(<span class="fu">all_of</span>(scale_columns)) <span class="sc">%&gt;%</span> </span>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>    <span class="fu">cor</span>(<span class="at">use =</span> <span class="st">&quot;complete.obs&quot;</span>)</span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  </span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  <span class="fu">all</span>(cor_data <span class="sc">&gt;=</span> <span class="dv">0</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>}</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="fu">all</span>(cor_data <span class="sc">&gt;=</span> <span class="dv">0</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>}</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a></span>
 <span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a></span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co"># Sanity-Checks für jede BFI-Subskala</span></span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="fu">sanity_check_bfi_scale</span>(dat_bfi, <span class="fu">c</span>(<span class="st">&quot;bfi_e1&quot;</span>, <span class="st">&quot;bfi_e2_recode&quot;</span>, </span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>                                                        <span class="st">&quot;bfi_e3&quot;</span>, <span class="st">&quot;bfi_e4&quot;</span>, <span class="st">&quot;bfi_e5_recode&quot;</span>, <span class="st">&quot;bfi_e6&quot;</span>, <span class="st">&quot;bfi_e7_recode&quot;</span>, <span class="st">&quot;bfi_e8&quot;</span>))</span></code></pre></div>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co"># Sanity-Checks for everiy BFI subscale</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="fu">sanity_check_bfi_scale</span>(dat_bif_recoded, sub_bfi_a)</span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">sanity_check_bfi_scale</span>(dat_bfi, <span class="fu">c</span>(<span class="st">&quot;bfi_c1&quot;</span>, <span class="st">&quot;bfi_c2_recode&quot;</span>, </span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>                                                             <span class="st">&quot;bfi_c3&quot;</span>, <span class="st">&quot;bfi_c4_recode&quot;</span>, <span class="st">&quot;bfi_c5_recode&quot;</span>, <span class="st">&quot;bfi_c6&quot;</span>, <span class="st">&quot;bfi_c7&quot;</span>, <span class="st">&quot;bfi_c8&quot;</span>, <span class="st">&quot;bfi_c9_recode&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">sanity_check_bfi_scale</span>(dat_bif_recoded, sub_bfi_c)</span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">sanity_check_bfi_scale</span>(dat_bfi, <span class="fu">c</span>(<span class="st">&quot;bfi_n1&quot;</span>, <span class="st">&quot;bfi_n2_recode&quot;</span>, <span class="st">&quot;bfi_n3&quot;</span>, </span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>                                                       <span class="st">&quot;bfi_n4&quot;</span>, <span class="st">&quot;bfi_n5_recode&quot;</span>, <span class="st">&quot;bfi_n6&quot;</span>, <span class="st">&quot;bfi_n7_recode&quot;</span>, <span class="st">&quot;bfi_n8&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">sanity_check_bfi_scale</span>(dat_bif_recoded, sub_bfi_e)</span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">sanity_check_bfi_scale</span>(dat_bfi, <span class="fu">c</span>(<span class="st">&quot;bfi_a1_recode&quot;</span>, <span class="st">&quot;bfi_a2&quot;</span>, <span class="st">&quot;bfi_a3_recode&quot;</span>, </span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>                                                         <span class="st">&quot;bfi_a4&quot;</span>, <span class="st">&quot;bfi_a5&quot;</span>, <span class="st">&quot;bfi_a6_recode&quot;</span>, <span class="st">&quot;bfi_a7&quot;</span>, <span class="st">&quot;bfi_a8_recode&quot;</span>, <span class="st">&quot;bfi_a9&quot;</span>))</span></code></pre></div>
-<pre><code>## [1] TRUE</code></pre>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">sanity_check_bfi_scale</span>(dat_bfi, <span class="fu">c</span>(<span class="st">&quot;bfi_o1&quot;</span>, <span class="st">&quot;bfi_o2&quot;</span>, <span class="st">&quot;bfi_o3&quot;</span>, <span class="st">&quot;bfi_o4&quot;</span>, <span class="st">&quot;bfi_o5&quot;</span>, </span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>                                                    <span class="st">&quot;bfi_o6&quot;</span>, <span class="st">&quot;bfi_o7_recode&quot;</span>, <span class="st">&quot;bfi_o8&quot;</span>, <span class="st">&quot;bfi_o9_recode&quot;</span>, <span class="st">&quot;bfi_o10&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">sanity_check_bfi_scale</span>(dat_bif_recoded, sub_bfi_o)</span></code></pre></div>
 <pre><code>## [1] FALSE</code></pre>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">sanity_check_bfi_scale</span>(dat_bif_recoded, sub_bfi_n)</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># there is one negativ in openness, but it is close to zero and only between o7 and o10. Decision, still correct. </span></span></code></pre></div>
 <ul>
-<li>there is one negativ in openness, but it is close to zero and only
-between o7 and o10. Decision, still correct.</li>
+<li>there is one value negativ in openness, but it is close to zero and
+only between o7 and o10. Decision, still correct.</li>
 </ul>
 </div>
 <div id="check-logical-minimum-and-maximum-scores-1-to-6" class="section level3">
 <h3>Check logical minimum and maximum scores (1 to 6)</h3>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>dat_bfi <span class="ot">&lt;-</span> dat_bfi <span class="sc">|&gt;</span></span>
+<ul>
+<li>Check that the item level data does not violate the logical minimum
+and maximum scores (1 to 6). Create an exclusion variable and set
+participants with impossible data to “exclude”.</li>
+</ul>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>dat_bfi_scores_completeness <span class="ot">&lt;-</span> dat_bif_recoded <span class="sc">|&gt;</span></span>
 <span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>  <span class="fu">rowwise</span>() <span class="sc">|&gt;</span></span>
-<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">exclude_value_bfi =</span> <span class="fu">if_else</span>(<span class="fu">any</span>((<span class="fu">c_across</span>(<span class="fu">starts_with</span>(<span class="st">&quot;bfi&quot;</span>)) <span class="sc">&lt;</span> <span class="dv">1</span> <span class="sc">|</span> </span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">exclude_min_max_scores =</span> <span class="fu">if_else</span>(<span class="fu">any</span>((<span class="fu">c_across</span>(<span class="fu">starts_with</span>(<span class="st">&quot;bfi&quot;</span>)) <span class="sc">&lt;</span> <span class="dv">1</span> <span class="sc">|</span> </span>
 <span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>                                         <span class="fu">c_across</span>(<span class="fu">starts_with</span>(<span class="st">&quot;bfi&quot;</span>)) <span class="sc">&gt;</span> <span class="dv">6</span>),</span>
-<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>                                     <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">&quot;exclude&quot;</span>, <span class="st">&quot;include&quot;</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code></pre></div>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>                                     <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">&quot;exclude&quot;</span>, <span class="st">&quot;include&quot;</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>  <span class="fu">select</span>(unique_id, exclude_min_max_scores)</span></code></pre></div>
 </div>
 <div id="check-completness-of-date-of-each-participant" class="section level3">
 <h3>Check completness of Date of each participant</h3>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>check_bfi_scale <span class="ot">&lt;-</span> <span class="cf">function</span>(data, scale_prefix, threshold) {</span>
+<ul>
+<li>Check that all participants have complete data on the BFI scales
+they completed. Create an exclusion variable and set participants with
+incomplete data to “exclude”.</li>
+</ul>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>check_bfi_scale <span class="ot">&lt;-</span> <span class="cf">function</span>(data, columns, threshold, col_name) {</span>
 <span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>  data <span class="sc">%&gt;%</span></span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>    <span class="fu">rowwise</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="sc">!!</span><span class="fu">paste0</span>(<span class="st">&quot;exclude_incomplete_scales_&quot;</span>, scale_prefix) <span class="sc">:=</span> {</span>
-<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>      vals <span class="ot">=</span> <span class="fu">c_across</span>(<span class="fu">grep</span>(<span class="fu">paste0</span>(<span class="st">&quot;^&quot;</span>, scale_prefix, <span class="st">&quot;(?!.*recode)&quot;</span>), <span class="fu">names</span>(data), <span class="at">perl =</span> <span class="cn">TRUE</span>, <span class="at">value =</span> <span class="cn">TRUE</span>))</span>
-<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>      num_non_na <span class="ot">=</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(vals))</span>
-<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>      <span class="fu">if_else</span>(num_non_na <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span> num_non_na <span class="sc">&lt;</span> threshold, <span class="st">&quot;exclude&quot;</span>, <span class="st">&quot;include&quot;</span>)</span>
-<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>    }) <span class="sc">%&gt;%</span></span>
-<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a>    <span class="fu">ungroup</span>()</span>
-<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>}</span>
-<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a></span>
-<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a>dat_bfi <span class="ot">&lt;-</span> <span class="fu">check_bfi_scale</span>(dat_bfi, <span class="st">&quot;bfi_a&quot;</span>, <span class="dv">9</span>)</span>
-<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a>dat_bfi <span class="ot">&lt;-</span> <span class="fu">check_bfi_scale</span>(dat_bfi, <span class="st">&quot;bfi_c&quot;</span>, <span class="dv">9</span>)</span>
-<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a>dat_bfi <span class="ot">&lt;-</span> <span class="fu">check_bfi_scale</span>(dat_bfi, <span class="st">&quot;bfi_e&quot;</span>, <span class="dv">8</span>)</span>
-<span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a>dat_bfi <span class="ot">&lt;-</span> <span class="fu">check_bfi_scale</span>(dat_bfi, <span class="st">&quot;bfi_o&quot;</span>, <span class="dv">10</span>)</span>
-<span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a>dat_bfi <span class="ot">&lt;-</span> <span class="fu">check_bfi_scale</span>(dat_bfi, <span class="st">&quot;bfi_n&quot;</span>, <span class="dv">8</span>)</span></code></pre></div>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="sc">!!</span>rlang<span class="sc">::</span><span class="fu">sym</span>(col_name) <span class="sc">:=</span> {</span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>      vals <span class="ot">&lt;-</span> purrr<span class="sc">::</span><span class="fu">pmap</span>(<span class="fu">list</span>(<span class="sc">!!!</span>rlang<span class="sc">::</span><span class="fu">syms</span>(columns)), <span class="sc">~</span><span class="fu">c</span>(...))</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>      purrr<span class="sc">::</span><span class="fu">map_chr</span>(vals, <span class="cf">function</span>(x) {</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">all</span>(<span class="fu">is.na</span>(x))) {</span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>          <span class="st">&quot;include&quot;</span></span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>        } <span class="cf">else</span> {</span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a>          num_non_na <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(x))</span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>          <span class="cf">if</span> (num_non_na <span class="sc">&gt;=</span> threshold) {</span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a>            <span class="st">&quot;include&quot;</span></span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a>          } <span class="cf">else</span> {</span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a>            <span class="st">&quot;exclude&quot;</span></span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a>          }</span>
+<span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a>        }</span>
+<span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a>      })</span>
+<span id="cb18-17"><a href="#cb18-17" tabindex="-1"></a>    })</span>
+<span id="cb18-18"><a href="#cb18-18" tabindex="-1"></a>}</span>
+<span id="cb18-19"><a href="#cb18-19" tabindex="-1"></a></span>
+<span id="cb18-20"><a href="#cb18-20" tabindex="-1"></a></span>
+<span id="cb18-21"><a href="#cb18-21" tabindex="-1"></a></span>
+<span id="cb18-22"><a href="#cb18-22" tabindex="-1"></a>dat_bfi_participant_completeness <span class="ot">&lt;-</span> dat_bif_recoded <span class="sc">|&gt;</span>  </span>
+<span id="cb18-23"><a href="#cb18-23" tabindex="-1"></a>  <span class="fu">check_bfi_scale</span>(sub_bfi_a, <span class="dv">9</span>, <span class="st">&quot;exclude_sub_bfi_agreeablenes&quot;</span>) <span class="sc">|&gt;</span>  </span>
+<span id="cb18-24"><a href="#cb18-24" tabindex="-1"></a>  <span class="fu">check_bfi_scale</span>(sub_bfi_c, <span class="dv">9</span>, <span class="st">&quot;exclude_sub_bfi_conscientiousness&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb18-25"><a href="#cb18-25" tabindex="-1"></a>  <span class="fu">check_bfi_scale</span>(sub_bfi_e, <span class="dv">8</span>, <span class="st">&quot;exclude_sub_bfi_extraversion&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb18-26"><a href="#cb18-26" tabindex="-1"></a>  <span class="fu">check_bfi_scale</span>(sub_bfi_o, <span class="dv">10</span>, <span class="st">&quot;exclude_sub_bfi_openness&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb18-27"><a href="#cb18-27" tabindex="-1"></a>  <span class="fu">check_bfi_scale</span>(sub_bfi_n, <span class="dv">8</span>, <span class="st">&quot;exclude_sub_bfi_neuroticism&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb18-28"><a href="#cb18-28" tabindex="-1"></a>  <span class="fu">select</span>(unique_id, <span class="fu">c</span>(<span class="fu">starts_with</span>(<span class="st">&quot;exclude&quot;</span>)))</span></code></pre></div>
 </div>
 </div>
 <div id="mean-score-subscales-incl.-sanity-check" class="section level2">
@@ -1820,7 +1848,178 @@ score (i.e., first determine this min and max score), and revise your
 scoring code if it does.</li>
 </ul></li>
 </ul>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>dat_bfi_means <span class="ot">&lt;-</span> dat_bfi <span class="sc">|&gt;</span> </span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">mean_bfi_agreeableness =</span> <span class="fu">rowMeans</span>(<span class="fu">select</span>(dat_bif_recoded, <span class="fu">all_of</span>(sub_bfi_a))),</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>         <span class="at">mean_bfi_conscientiousness =</span> <span class="fu">rowMeans</span>(<span class="fu">select</span>(dat_bif_recoded, <span class="fu">all_of</span>(sub_bfi_c))), </span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>         <span class="at">mean_bfi_extraversion =</span> <span class="fu">rowMeans</span>(<span class="fu">select</span>(dat_bif_recoded, <span class="fu">all_of</span>(sub_bfi_e))), </span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>         <span class="at">mean_bfi_neuroticism =</span> <span class="fu">rowMeans</span>(<span class="fu">select</span>(dat_bif_recoded, <span class="fu">all_of</span>(sub_bfi_o))),</span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>         <span class="at">mean_bfi_openness =</span> <span class="fu">rowMeans</span>(<span class="fu">select</span>(dat_bif_recoded, <span class="fu">all_of</span>(sub_bfi_n)))) <span class="sc">|&gt;</span> </span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>  <span class="fu">select</span>(unique_id, <span class="fu">starts_with</span>(<span class="st">&quot;mean_bfi&quot;</span>))</span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a></span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a><span class="co"># As the values are between 1 and 6 the mean can only be between 1 and six. </span></span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>min_mean_score <span class="ot">=</span> <span class="dv">1</span></span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a>max_mean_score <span class="ot">=</span> <span class="dv">6</span></span>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a></span>
+<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a>check_mean_score_range <span class="ot">&lt;-</span> <span class="cf">function</span>(mean_score) {</span>
+<span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a>  mean_score <span class="sc">&gt;=</span> min_mean_score <span class="sc">&amp;</span> mean_score <span class="sc">&lt;=</span> max_mean_score</span>
+<span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a>}</span>
+<span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a></span>
+<span id="cb19-17"><a href="#cb19-17" tabindex="-1"></a>check_values <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb19-18"><a href="#cb19-18" tabindex="-1"></a>  <span class="fu">check_mean_score_range</span>(dat_bfi_means<span class="sc">$</span>mean_bfi_agreeableness),</span>
+<span id="cb19-19"><a href="#cb19-19" tabindex="-1"></a>  <span class="fu">check_mean_score_range</span>(dat_bfi_means<span class="sc">$</span>mean_bfi_conscientiousness),</span>
+<span id="cb19-20"><a href="#cb19-20" tabindex="-1"></a>  <span class="fu">check_mean_score_range</span>(dat_bfi_means<span class="sc">$</span>mean_bfi_extraversion),</span>
+<span id="cb19-21"><a href="#cb19-21" tabindex="-1"></a>  <span class="fu">check_mean_score_range</span>(dat_bfi_means<span class="sc">$</span>mean_bfi_neuroticism),</span>
+<span id="cb19-22"><a href="#cb19-22" tabindex="-1"></a>  <span class="fu">check_mean_score_range</span>(dat_bfi_means<span class="sc">$</span>mean_bfi_openness)</span>
+<span id="cb19-23"><a href="#cb19-23" tabindex="-1"></a>)</span>
+<span id="cb19-24"><a href="#cb19-24" tabindex="-1"></a></span>
+<span id="cb19-25"><a href="#cb19-25" tabindex="-1"></a><span class="co"># number of true and false. </span></span>
+<span id="cb19-26"><a href="#cb19-26" tabindex="-1"></a>num_true <span class="ot">&lt;-</span> <span class="fu">sum</span>(check_values, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb19-27"><a href="#cb19-27" tabindex="-1"></a>num_false <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="sc">!</span>check_values, <span class="at">na.rm =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb19-28"><a href="#cb19-28" tabindex="-1"></a></span>
+<span id="cb19-29"><a href="#cb19-29" tabindex="-1"></a></span>
+<span id="cb19-30"><a href="#cb19-30" tabindex="-1"></a><span class="fu">list</span>(<span class="at">number_of_true =</span> num_true,</span>
+<span id="cb19-31"><a href="#cb19-31" tabindex="-1"></a>     <span class="at">number_of_false =</span> num_false)</span></code></pre></div>
+<pre><code>## $number_of_true
+## [1] 427
+## 
+## $number_of_false
+## [1] NA</code></pre>
+<p>There are no FALSE means which are smaller than 1 or greater than
+6.</p>
 </div>
+</div>
+<div id="iat" class="section level1">
+<h1>IAT</h1>
+<div id="scoring" class="section level2">
+<h2>Scoring</h2>
+<ul>
+<li>Score the trial-level IAT data using the Greenwald “D” score:
+Calculate a mean RT (“mean1”) for blocks 3 and 6 (one score using trials
+from both blocks), a mean RT (“mean2”) for blocks 4 and 7 (one score
+using trials from both blocks), and the SD of RTs in blocks 3, 4, 6 and
+7 (“SD”). To calculate D: D = (mean2 - mean1)/SD. Blocks 1, 2, and 5 are
+practice blocks and must be discarded.</li>
+</ul>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>dat_iat <span class="ot">&lt;-</span> data_iat_raw <span class="sc">|&gt;</span></span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>  <span class="co"># code correct and incorrect to 1 and 0</span></span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">trial_correct =</span> <span class="fu">case_when</span>(trial_accuracy <span class="sc">==</span> <span class="st">&quot;correct&quot;</span> <span class="sc">~</span> <span class="dv">1</span>, </span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>                                   trial_accuracy <span class="sc">==</span> <span class="st">&quot;incorrect&quot;</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>                                   <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>block_number <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">5</span>)) </span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a></span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a><span class="co"># Calculations of mean and sd</span></span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a>dat_iat_d_scores <span class="ot">&lt;-</span> dat_iat <span class="sc">|&gt;</span> </span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a>  <span class="fu">group_by</span>(unique_id) <span class="sc">|&gt;</span> </span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean1 =</span> <span class="fu">mean</span>(trial_correct[block_number <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">6</span>)]),</span>
+<span id="cb21-12"><a href="#cb21-12" tabindex="-1"></a>            <span class="at">mean2 =</span> <span class="fu">mean</span>(trial_correct[block_number <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">7</span>)]),</span>
+<span id="cb21-13"><a href="#cb21-13" tabindex="-1"></a>            <span class="at">sd_rt =</span> <span class="fu">sd</span>(trial_correct),</span>
+<span id="cb21-14"><a href="#cb21-14" tabindex="-1"></a>            <span class="co"># If sd is 0, then the formula is undefined. It is only 0 if all values are the same, either 0 or 1. D then is 0. </span></span>
+<span id="cb21-15"><a href="#cb21-15" tabindex="-1"></a>            <span class="at">iat_d_score =</span> <span class="fu">ifelse</span>(sd_rt <span class="sc">==</span> <span class="dv">0</span>, <span class="dv">0</span>, (mean2 <span class="sc">-</span> mean1) <span class="sc">/</span> sd_rt)) <span class="sc">|&gt;</span></span>
+<span id="cb21-16"><a href="#cb21-16" tabindex="-1"></a>  <span class="fu">select</span>(unique_id, iat_d_score)</span>
+<span id="cb21-17"><a href="#cb21-17" tabindex="-1"></a></span>
+<span id="cb21-18"><a href="#cb21-18" tabindex="-1"></a></span>
+<span id="cb21-19"><a href="#cb21-19" tabindex="-1"></a><span class="co"># Sanity Check</span></span>
+<span id="cb21-20"><a href="#cb21-20" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">any</span>(dat_iat_d_scores<span class="sc">$</span>iat_d_score <span class="sc">&lt;</span> <span class="sc">-</span><span class="dv">2</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">||</span> <span class="fu">any</span>(dat_iat_d_scores<span class="sc">$</span>iat_d_score <span class="sc">&gt;</span> <span class="dv">2</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb21-21"><a href="#cb21-21" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="st">&quot;At least one D score is outside the expected range of -2 to +2. Revise the scoring implementation.&quot;</span>)</span>
+<span id="cb21-22"><a href="#cb21-22" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="exclude-participants-iat" class="section level2">
+<h2>Exclude participants IAT</h2>
+<ul>
+<li>Create an exclusion variable and set participants with incomplete
+trial level IAT data to “exclude”. Specifically, IAT should have 120
+trials on the critical test blocks (i.e., blocks 3, 4, 6 and 7). Trials
+on the other (practice) blocks can be discarded.</li>
+</ul>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co"># exclude participant with less than 120 trials</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>dat_iat_completeness <span class="ot">&lt;-</span> dat_iat <span class="sc">|&gt;</span> </span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>  <span class="fu">group_by</span>(unique_id) <span class="sc">|&gt;</span> </span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>  <span class="fu">count</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">exclude_iat_completeness =</span> <span class="fu">ifelse</span>(n <span class="sc">==</span> <span class="dv">120</span>, <span class="st">&quot;include&quot;</span>, <span class="st">&quot;exclude&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>n)</span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a></span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a></span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a><span class="co"># exclude participants wiht trial reaction less than 300</span></span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a>dat_iat_performance_mseconds <span class="ot">&lt;-</span> dat_iat <span class="sc">|&gt;</span> </span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">latency_prob =</span> <span class="fu">if_else</span>(trial_reaction_time_in_ms <span class="sc">&lt;</span> <span class="dv">300</span>, <span class="cn">TRUE</span>, <span class="cn">FALSE</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a>  <span class="fu">group_by</span>(unique_id) <span class="sc">|&gt;</span> </span>
+<span id="cb22-14"><a href="#cb22-14" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">proportion_fast_trials_iat =</span> <span class="fu">mean</span>(latency_prob)) <span class="sc">|&gt;</span> </span>
+<span id="cb22-15"><a href="#cb22-15" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">exclude_iat_msseconds =</span> <span class="fu">ifelse</span>(proportion_fast_trials_iat <span class="sc">&gt;</span> <span class="fl">0.10</span>,</span>
+<span id="cb22-16"><a href="#cb22-16" tabindex="-1"></a>                                        <span class="st">&quot;exclude&quot;</span>, <span class="st">&quot;include&quot;</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb22-17"><a href="#cb22-17" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>proportion_fast_trials_iat)</span>
+<span id="cb22-18"><a href="#cb22-18" tabindex="-1"></a>  </span>
+<span id="cb22-19"><a href="#cb22-19" tabindex="-1"></a></span>
+<span id="cb22-20"><a href="#cb22-20" tabindex="-1"></a><span class="co">#exclude participants with less than 75% accuracy</span></span>
+<span id="cb22-21"><a href="#cb22-21" tabindex="-1"></a>dat_iat_performance_accuracy <span class="ot">&lt;-</span> dat_iat <span class="sc">|&gt;</span></span>
+<span id="cb22-22"><a href="#cb22-22" tabindex="-1"></a>  <span class="fu">group_by</span>(unique_id) <span class="sc">|&gt;</span> </span>
+<span id="cb22-23"><a href="#cb22-23" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_performance_accuracy =</span> <span class="fu">mean</span>(trial_correct)) <span class="sc">|&gt;</span> </span>
+<span id="cb22-24"><a href="#cb22-24" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">exclude_iat_accuracy =</span> <span class="fu">ifelse</span>(mean_performance_accuracy <span class="sc">&lt;</span> <span class="fl">0.75</span>,</span>
+<span id="cb22-25"><a href="#cb22-25" tabindex="-1"></a>                                        <span class="st">&quot;exclude&quot;</span>, <span class="st">&quot;include&quot;</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb22-26"><a href="#cb22-26" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>mean_performance_accuracy)</span></code></pre></div>
+</div>
+</div>
+<div id="combine-dataframes" class="section level1">
+<h1>Combine dataframes</h1>
+<ul>
+<li>Combine the demographics, BFI, and IAT data into one data frame.
+This data frame should be one-row-one-participant. Both the mean scored
+and item level BFI data should be present in the dataset.</li>
+</ul>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="co"># left join demographics at the end so only the demographics of participants who filled out everything will be included. </span></span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>data_processed_before_exlusions <span class="ot">&lt;-</span> dat_bfi_scores_completeness <span class="sc">|&gt;</span> </span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>  <span class="fu">full_join</span>(dat_bfi_participant_completeness, <span class="at">by =</span> <span class="st">&quot;unique_id&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a>  <span class="fu">full_join</span>(dat_iat_completeness, <span class="at">by =</span> <span class="st">&quot;unique_id&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>  <span class="fu">full_join</span>(dat_iat_performance_mseconds, <span class="at">by =</span> <span class="st">&quot;unique_id&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a>  <span class="fu">full_join</span>(dat_iat_performance_accuracy, <span class="at">by =</span> <span class="st">&quot;unique_id&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a>  <span class="fu">full_join</span>(dat_bfi_means, <span class="at">by =</span> <span class="st">&quot;unique_id&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a>  <span class="fu">full_join</span>(dat_bif_recoded, <span class="at">by =</span> <span class="st">&quot;unique_id&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a>  <span class="fu">full_join</span>(dat_iat_d_scores, <span class="at">by =</span> <span class="st">&quot;unique_id&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a>  <span class="fu">left_join</span>(dat_age_gender, <span class="at">by =</span> <span class="st">&quot;unique_id&quot;</span>)</span></code></pre></div>
+</div>
+<div id="master-exlusions" class="section level1">
+<h1>Master Exlusions</h1>
+<ul>
+<li>Create a master exclude variable from the individual exclude
+variables.</li>
+</ul>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a>data_processed <span class="ot">&lt;-</span> data_processed_before_exlusions <span class="sc">|&gt;</span> </span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">exclude_participant =</span> <span class="fu">case_when</span>(exclude_min_max_scores <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>, </span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a>                                         exclude_sub_bfi_agreeablenes <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a>                                         exclude_sub_bfi_conscientiousness <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a>                                         exclude_sub_bfi_extraversion <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a>                                         exclude_sub_bfi_openness <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a>                                         exclude_sub_bfi_neuroticism <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a>                                         exclude_iat_completeness <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a>                                         exclude_iat_msseconds <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a>                                         exclude_iat_accuracy <span class="sc">==</span> <span class="st">&quot;exclude&quot;</span> <span class="sc">~</span> <span class="st">&quot;exclude&quot;</span>,</span>
+<span id="cb24-11"><a href="#cb24-11" tabindex="-1"></a>                                         <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;include&quot;</span>))</span></code></pre></div>
+</div>
+<div id="write-to-disk" class="section level1">
+<h1>Write to disk</h1>
+<ul>
+<li>Save the processed data to the data/processed/ folder as
+“data_processed.csv”.</li>
+</ul>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="co"># in case this dir doesn&#39;t exist, create it</span></span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a><span class="fu">dir.create</span>(<span class="st">&quot;../data/processed/&quot;</span>)</span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a><span class="co"># save data to disk in that dir</span></span>
+<span id="cb25-5"><a href="#cb25-5" tabindex="-1"></a><span class="fu">write_csv</span>(data_processed, <span class="st">&quot;../data/processed/data_processed.csv&quot;</span>)</span></code></pre></div>
+</div>
+<div id="create-codebook-template-for-the-processed-data" class="section level1">
+<h1>Create codebook template for the processed data</h1>
+<ul>
+<li>Create a codebook for the processed data file that explains what
+each variable represents.</li>
+</ul>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">file.exists</span>(<span class="st">&quot;../data/processed/data_processed_codebook.xlsx&quot;</span>)){</span>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a>  <span class="co"># convert the column names to a df</span></span>
+<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a>  codebook_template <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">variable =</span> <span class="fu">colnames</span>(data_processed)) <span class="sc">|&gt;</span></span>
+<span id="cb26-4"><a href="#cb26-4" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">explanation =</span> <span class="cn">NA</span>)</span>
+<span id="cb26-5"><a href="#cb26-5" tabindex="-1"></a>  <span class="co"># write to disk as an excel file</span></span>
+<span id="cb26-6"><a href="#cb26-6" tabindex="-1"></a>  openxlsx<span class="sc">::</span><span class="fu">write.xlsx</span>(codebook_template, <span class="at">file =</span> <span class="st">&quot;../data/processed/data_processed_codebook.xlsx&quot;</span>)</span>
+<span id="cb26-7"><a href="#cb26-7" tabindex="-1"></a>}</span></code></pre></div>
 </div>
 
 
