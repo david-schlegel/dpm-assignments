@@ -1664,7 +1664,7 @@ border-radius: 0px;
 big-5 personality facets and implicit racial attitudes</h1>
 <h3 class="subtitle">Data processing</h3>
 <h4 class="author">David Schlegel</h4>
-<h4 class="date">26 December, 2023</h4>
+<h4 class="date">04 January, 2024</h4>
 
 </div>
 
@@ -1692,8 +1692,8 @@ big-5 personality facets and implicit racial attitudes</h1>
 </div>
 <div id="demographics" class="section level1">
 <h1>Demographics</h1>
-<div id="extract-age-and-gender-from-the-raw-demographics-data." class="section level2">
-<h2>Extract age and gender from the raw demographics data.</h2>
+<div id="extract-age-and-gender" class="section level2">
+<h2>Extract age and gender</h2>
 <ul>
 <li>Extract age and gender from the raw demographics data.</li>
 </ul>
@@ -1719,8 +1719,8 @@ items 2, 5 and 7, conscientiousness items 2, 4 5 and 9, neuroticism
 items 2, 5, and 7, agreeableness 1, 3, 6, and 8, and openness items 7
 and 9.</li>
 </ul>
-<div id="recoding-data-reverse-scales" class="section level2">
-<h2>Recoding Data (reverse scales)</h2>
+<div id="recoding-data" class="section level2">
+<h2>Recoding Data</h2>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Function to recode negatively worded items</span></span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>reverse_score <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
 <span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="fu">case_when</span>(</span>
@@ -1749,8 +1749,8 @@ and 9.</li>
 <span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>dat_bif_recoded <span class="ot">&lt;-</span> dat_bfi <span class="sc">|&gt;</span> </span>
 <span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="fu">select</span>(unique_id, <span class="fu">all_of</span>(<span class="fu">c</span>(sub_bfi_a, sub_bfi_c, sub_bfi_e, sub_bfi_o, sub_bfi_n)))</span></code></pre></div>
 </div>
-<div id="sanity-checks-after-recoding" class="section level2">
-<h2>Sanity Checks after recoding</h2>
+<div id="sanity-checks" class="section level2">
+<h2>Sanity Checks</h2>
 <div id="check-correlations" class="section level3">
 <h3>Check correlations</h3>
 <ul>
@@ -1786,8 +1786,8 @@ about item reversals, or their implementation, is not correct.</li>
 only between o7 and o10. Decision, still correct.</li>
 </ul>
 </div>
-<div id="check-logical-minimum-and-maximum-scores-1-to-6" class="section level3">
-<h3>Check logical minimum and maximum scores (1 to 6)</h3>
+<div id="check-logical-minimum-and-maximum-scores" class="section level3">
+<h3>Check logical minimum and maximum scores</h3>
 <ul>
 <li>Check that the item level data does not violate the logical minimum
 and maximum scores (1 to 6). Create an exclusion variable and set
@@ -1800,8 +1800,8 @@ participants with impossible data to “exclude”.</li>
 <span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>                                     <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">&quot;exclude&quot;</span>, <span class="st">&quot;include&quot;</span>)) <span class="sc">|&gt;</span> </span>
 <span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>  <span class="fu">select</span>(unique_id, exclude_min_max_scores)</span></code></pre></div>
 </div>
-<div id="check-completness-of-date-of-each-participant" class="section level3">
-<h3>Check completness of Date of each participant</h3>
+<div id="check-completness-of-data" class="section level3">
+<h3>Check completness of Data</h3>
 <ul>
 <li>Check that all participants have complete data on the BFI scales
 they completed. Create an exclusion variable and set participants with

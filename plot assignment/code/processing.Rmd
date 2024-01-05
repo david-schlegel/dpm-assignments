@@ -27,7 +27,9 @@ library(tidyverse)
 library(janitor) 
 library(stringr)
 library(openxlsx)
-
+library(ggplot2)
+library(ggbeeswarm)
+library(introdataviz)
 ```
 
 # Get data
@@ -35,25 +37,20 @@ library(openxlsx)
 ```{r}
 
 # demographics
-data_raw <- read_csv2("../data/raw/data_raw.csv", ) |> 
+data_raw <- read_delim("../data/raw/data_raw_reactiontime.csv",
+                       delim = ";", 
+                       locale = locale(decimal_mark = ".", grouping_mark = ","),
+                       col_types = cols()) |> 
   janitor::clean_names()
 
 ```
 
-# Demographics
+# Data wrangling
 
 ```{r}
+data_raw <- data_raw |> 
+  mutate(recall_score = as.numeric(recall_score))
 
-dat <- data_raw |> 
-  select(-c(topic_type, data_source, data_value_unit, data_value_type, topic_type, 
-            response, data_value_footnote_symbol)) |> 
-  filter(topic_desc == "Cigarette Use (Adults)",
-         measure_desc == "Current Smoking",
-         location_desc == "Alaska",
-         education == "All Grades" 
-         ) 
-
-distinct(dat, education)
 
 ```
 
@@ -62,30 +59,93 @@ distinct(dat, education)
 ## AMP
 
 ```{r}
-
+data_raw |>
+  group_by(age_group, test_condition) |>
+  summarise(mean = mean(recall_score))
+  
 ```
-
-
-# Define master exclusions
-
+## Plot
 ```{r}
 
-# create a master exclude_participant variable
-data_processed <- data_processed_before_exclusions |>
-  mutate(exclude_participant = case_when(tolower(age) == "test" ~ "exclude",
-                                         tolower(gender) == "test" ~ "exclude",
-                                         is.na(mean_evaluation) ~ "exclude",
-                                         # in this case we will exclude participants with missing demographics data or outcomes measures data. 
-                                         # Note that "list-wise exclusions" like this aren't always justified, as missingness often isn't at random. 
-                                         # How to treat missing data is a  whole area of work in itself, which we wont cover here.
-                                         is.na(age) ~ "exclude", 
-                                         is.na(gender) ~ "exclude",
-                                         exclude_amp_performance == "exclude" ~ "exclude",
-                                         exclude_duplicate_data == "exclude" ~ "exclude",
-                                         exclude_amp_completeness == "exclude" ~ "exclude", 
-                                         TRUE ~ "include"))
+
+# Setting the height for the rain elements
+rain_height <- .1
+
+# Create the Raincloud plot
+ggplot(data_raw, aes(x = "", y = recall_score, fill = age_group)) +
+  # Clouds
+  geom_flat_violin(trim=FALSE, alpha = 0.4,
+    position = position_nudge(x = rain_height + .05)) +
+  # Rain
+  geom_point(aes(colour = age_group), size = 2, alpha = .5, show.legend = FALSE, 
+              position = position_jitter(width = rain_height, height = 0)) +
+  # Boxplots
+  geom_boxplot(width = rain_height, alpha = 0.4, show.legend = FALSE, 
+               outlier.shape = NA,
+               position = position_nudge(x = -rain_height*2)) +
+  # Mean and SE point in the cloud
+  stat_summary(fun.data = mean_cl_normal, mapping = aes(color = age_group), show.legend = FALSE,
+               position = position_nudge(x = rain_height * 3)) +
+  # Adjust layout
+  scale_x_discrete(name = "", expand = c(rain_height*3, 0, 0, 0.7)) +
+  scale_y_continuous(name = "Recall Score",
+                     breaks = seq(0, 100, 10), 
+                     limits = c(0, 100)) +
+  coord_flip() +
+  facet_wrap(~factor(test_condition, 
+                     levels = c("Immediate", "Delayed"), 
+                     labels = c("Immediate", "Delayed")), 
+             nrow = 2) +
+  # Custom colours and theme
+  scale_fill_brewer(palette = "Dark2", name = "Age Group") +
+  scale_colour_brewer(palette = "Dark2") +
+  theme_minimal() +
+  theme(panel.grid.major.y = element_blank(),
+        legend.position = c(0.8, 0.8),
+        legend.background = element_rect(fill = "white", color = "white"))
 
 ```
+```{r}
+# Setting the height for the rain elements
+rain_height <- .1
+
+# Create the Raincloud plot
+ggplot(data_raw, aes(x = "", y = recall_score, fill = age_group)) +
+  # Clouds
+  geom_flat_violin(trim=FALSE, alpha = 0.4, position = position_nudge(x = rain_height + .05), adjust = 1.5) +
+  # Rain
+  geom_point(aes(color = age_group), size = 2, alpha = .6, position = position_jitter(width = rain_height, height = 0)) +
+  # Boxplots
+  geom_boxplot(width = rain_height / 3, alpha = 0.6, show.legend = FALSE, outlier.shape = NA, position = position_nudge(x = -rain_height*2)) +
+  # Mean and SE point in the cloud
+  stat_summary(fun.data = mean_cl_normal, mapping = aes(color = age_group), show.legend = FALSE, position = position_nudge(x = rain_height * 3)) +
+  # Adjust layout
+  scale_x_discrete(name = "", expand = c(rain_height*3, 0, 0, 0.7)) +
+  scale_y_continuous(name = "Recall Score", breaks = seq(0, 100, 10), limits = c(0, 100)) +
+  coord_flip() +
+  facet_wrap(~factor(test_condition, levels = c("Immediate", "Delayed"), labels = c("Immediate", "Delayed")), nrow = 2) +
+  # Custom colours and theme
+  scale_fill_manual(values = c("#1b9e77", "#d95f02", "#7570b3"), name = "Age Group") +
+  scale_color_manual(values = c("#1b9e77", "#d95f02", "#7570b3")) +
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.x = element_line(size = .1, color = "grey80"),
+    panel.background = element_rect(fill = "white", color = NA),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(size = 14, face = "bold"),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold"),
+    legend.background = element_rect(fill = "white", color = "white"),
+    legend.box.background = element_rect(color = "white")
+  ) +
+  labs(title = "Recall Scores by Age Group and Test Condition")
+
+```
+
+
+
 
 # Write to disk
 
