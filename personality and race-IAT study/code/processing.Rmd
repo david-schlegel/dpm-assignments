@@ -222,9 +222,16 @@ There are no FALSE means which are smaller than 1 or greater than 6.
 ## Scoring
 - Score the trial-level IAT data using the Greenwald "D" score: Calculate a mean RT ("mean1") for blocks 3 and 6 (one score using trials from both blocks), a mean RT ("mean2") for blocks 4 and 7 (one score using trials from both blocks), and the SD of RTs in blocks 3, 4, 6 and 7 ("SD"). To calculate D: D = (mean2 - mean1)/SD. Blocks 1, 2, and 5 are practice blocks and must be discarded. 
 ```{r}
+# Filter and recode data
+dat_iat <- data_iat_raw |>
+  # code correct and incorrect to 1 and 0
+  mutate(trial_correct = case_when(trial_accuracy == "correct" ~ 1, 
+                                   trial_accuracy == "incorrect" ~ 0,
+                                   TRUE ~ NA)) |> 
+  filter(!block_number %in% c(1, 2, 5)) 
+
 # Calculate the man and the deviation
-dat_iat_d_scores <- data_iat_raw |>
-  filter(!block_number %in% c(1, 2, 5)) |> 
+dat_iat_d_scores <- dat_iat |>
   group_by(unique_id) |>
   summarise(
     mean1 = mean(trial_reaction_time_in_ms[block_number %in% c(3, 6)], na.rm = TRUE),

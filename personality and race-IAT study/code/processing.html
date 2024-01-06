@@ -1664,7 +1664,7 @@ border-radius: 0px;
 big-5 personality facets and implicit racial attitudes</h1>
 <h3 class="subtitle">Data processing</h3>
 <h4 class="author">David Schlegel</h4>
-<h4 class="date">04 January, 2024</h4>
+<h4 class="date">06 January, 2024</h4>
 
 </div>
 
@@ -1783,7 +1783,7 @@ about item reversals, or their implementation, is not correct.</li>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># there is one negativ in openness, but it is close to zero and only between o7 and o10. Decision, still correct. </span></span></code></pre></div>
 <ul>
 <li>there is one value negativ in openness, but it is close to zero and
-only between o7 and o10. Decision, still correct.</li>
+only in o7 and o10. Decision, still correct.</li>
 </ul>
 </div>
 <div id="check-logical-minimum-and-maximum-scores" class="section level3">
@@ -1900,28 +1900,32 @@ using trials from both blocks), and the SD of RTs in blocks 3, 4, 6 and
 7 (“SD”). To calculate D: D = (mean2 - mean1)/SD. Blocks 1, 2, and 5 are
 practice blocks and must be discarded.</li>
 </ul>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>dat_iat <span class="ot">&lt;-</span> data_iat_raw <span class="sc">|&gt;</span></span>
-<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>  <span class="co"># code correct and incorrect to 1 and 0</span></span>
-<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">trial_correct =</span> <span class="fu">case_when</span>(trial_accuracy <span class="sc">==</span> <span class="st">&quot;correct&quot;</span> <span class="sc">~</span> <span class="dv">1</span>, </span>
-<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>                                   trial_accuracy <span class="sc">==</span> <span class="st">&quot;incorrect&quot;</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
-<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>                                   <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>block_number <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">5</span>)) </span>
-<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a></span>
-<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a><span class="co"># Calculations of mean and sd</span></span>
-<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a>dat_iat_d_scores <span class="ot">&lt;-</span> dat_iat <span class="sc">|&gt;</span> </span>
-<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a>  <span class="fu">group_by</span>(unique_id) <span class="sc">|&gt;</span> </span>
-<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean1 =</span> <span class="fu">mean</span>(trial_correct[block_number <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">6</span>)]),</span>
-<span id="cb21-12"><a href="#cb21-12" tabindex="-1"></a>            <span class="at">mean2 =</span> <span class="fu">mean</span>(trial_correct[block_number <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">7</span>)]),</span>
-<span id="cb21-13"><a href="#cb21-13" tabindex="-1"></a>            <span class="at">sd_rt =</span> <span class="fu">sd</span>(trial_correct),</span>
-<span id="cb21-14"><a href="#cb21-14" tabindex="-1"></a>            <span class="co"># If sd is 0, then the formula is undefined. It is only 0 if all values are the same, either 0 or 1. D then is 0. </span></span>
-<span id="cb21-15"><a href="#cb21-15" tabindex="-1"></a>            <span class="at">iat_d_score =</span> <span class="fu">ifelse</span>(sd_rt <span class="sc">==</span> <span class="dv">0</span>, <span class="dv">0</span>, (mean2 <span class="sc">-</span> mean1) <span class="sc">/</span> sd_rt)) <span class="sc">|&gt;</span></span>
-<span id="cb21-16"><a href="#cb21-16" tabindex="-1"></a>  <span class="fu">select</span>(unique_id, iat_d_score)</span>
-<span id="cb21-17"><a href="#cb21-17" tabindex="-1"></a></span>
-<span id="cb21-18"><a href="#cb21-18" tabindex="-1"></a></span>
-<span id="cb21-19"><a href="#cb21-19" tabindex="-1"></a><span class="co"># Sanity Check</span></span>
-<span id="cb21-20"><a href="#cb21-20" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">any</span>(dat_iat_d_scores<span class="sc">$</span>iat_d_score <span class="sc">&lt;</span> <span class="sc">-</span><span class="dv">2</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">||</span> <span class="fu">any</span>(dat_iat_d_scores<span class="sc">$</span>iat_d_score <span class="sc">&gt;</span> <span class="dv">2</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) {</span>
-<span id="cb21-21"><a href="#cb21-21" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="st">&quot;At least one D score is outside the expected range of -2 to +2. Revise the scoring implementation.&quot;</span>)</span>
-<span id="cb21-22"><a href="#cb21-22" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="co"># Filter and recode data</span></span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>dat_iat <span class="ot">&lt;-</span> data_iat_raw <span class="sc">|&gt;</span></span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>  <span class="co"># code correct and incorrect to 1 and 0</span></span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">trial_correct =</span> <span class="fu">case_when</span>(trial_accuracy <span class="sc">==</span> <span class="st">&quot;correct&quot;</span> <span class="sc">~</span> <span class="dv">1</span>, </span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>                                   trial_accuracy <span class="sc">==</span> <span class="st">&quot;incorrect&quot;</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a>                                   <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>block_number <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">5</span>)) </span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a></span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a><span class="co"># Calculate the man and the deviation</span></span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a>dat_iat_d_scores <span class="ot">&lt;-</span> dat_iat <span class="sc">|&gt;</span></span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a>  <span class="fu">group_by</span>(unique_id) <span class="sc">|&gt;</span></span>
+<span id="cb21-12"><a href="#cb21-12" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb21-13"><a href="#cb21-13" tabindex="-1"></a>    <span class="at">mean1 =</span> <span class="fu">mean</span>(trial_reaction_time_in_ms[block_number <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">6</span>)], <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb21-14"><a href="#cb21-14" tabindex="-1"></a>    <span class="at">mean2 =</span> <span class="fu">mean</span>(trial_reaction_time_in_ms[block_number <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">7</span>)], <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb21-15"><a href="#cb21-15" tabindex="-1"></a>    <span class="at">SD =</span> <span class="fu">sd</span>(trial_reaction_time_in_ms[block_number <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">7</span>)], <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb21-16"><a href="#cb21-16" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb21-17"><a href="#cb21-17" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb21-18"><a href="#cb21-18" tabindex="-1"></a>    <span class="at">iat_d_score =</span> (mean2 <span class="sc">-</span> mean1) <span class="sc">/</span> SD</span>
+<span id="cb21-19"><a href="#cb21-19" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb21-20"><a href="#cb21-20" tabindex="-1"></a>  <span class="fu">select</span>(unique_id, iat_d_score)</span>
+<span id="cb21-21"><a href="#cb21-21" tabindex="-1"></a></span>
+<span id="cb21-22"><a href="#cb21-22" tabindex="-1"></a></span>
+<span id="cb21-23"><a href="#cb21-23" tabindex="-1"></a><span class="co"># Sanity Check</span></span>
+<span id="cb21-24"><a href="#cb21-24" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">any</span>(dat_iat_d_scores<span class="sc">$</span>iat_d_score <span class="sc">&lt;</span> <span class="sc">-</span><span class="dv">2</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">||</span> <span class="fu">any</span>(dat_iat_d_scores<span class="sc">$</span>iat_d_score <span class="sc">&gt;</span> <span class="dv">2</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb21-25"><a href="#cb21-25" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="st">&quot;At least one D score is outside the expected range of -2 to +2. Revise the scoring implementation.&quot;</span>)</span>
+<span id="cb21-26"><a href="#cb21-26" tabindex="-1"></a>}</span></code></pre></div>
 </div>
 <div id="exclude-participants-iat" class="section level2">
 <h2>Exclude participants IAT</h2>
