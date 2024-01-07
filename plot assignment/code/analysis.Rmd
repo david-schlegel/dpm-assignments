@@ -61,7 +61,7 @@ Consider making use of the many extensions to ggplot2, e.g.:
 
 # Daten einlesen
 ```{r}
-data_raw <- read_csv("../data/raw/depression_data.csv") |> 
+data_raw <- read_csv("../data/processed/depression_data.csv") |> 
   janitor::clean_names()
 ```
 
