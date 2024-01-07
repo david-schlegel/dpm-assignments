@@ -11,11 +11,6 @@ output:
     toc_float: yes
 ---
 
-# Beschreiben welche Elemente einen guten Plot ausmachen, damit klar wird, was mant macht. Immer genau erklären, warum man etwas macht. Warum man welche Farben, welche Linien, welche Bezeichungen etc. braucht. Im Schlechten alles so machen, dass es möglichst schlecht ist. 
-# Keine Restriktionen auf Daten und man irgendeine Geschichte zu den Zahlen erzählen. 
-# Nicht zu basic, aber auch nicht to sophisticated, dass man sie in Artikeln nicht finden würde. Z.B. Raincloud Plots sind ok. Sie sollten gut ausschauen und psychologisch relevant sein. 
-# Beide sollten etwas aussagen, z.B. ich möchte diese
-
 ```{r, include=FALSE}
 
 knitr::opts_chunk$set(message = FALSE,
@@ -26,12 +21,14 @@ knitr::opts_chunk$set(message = FALSE,
 # Dependencies
 
 ```{r}
+library(tidyverse)
 library(janitor) 
 library(openxlsx)
 library(ggplot2)
 library(introdataviz)
 library(viridis)
 library(ggsignif)
+library(ggimage)
 
 ```
 
@@ -67,109 +64,111 @@ Consider making use of the many extensions to ggplot2, e.g.:
 data_raw <- read_csv("../data/raw/depression_data.csv") |> 
   janitor::clean_names()
 ```
-# Daten konvertieren
-```{r}
-
-data_raw$gender <- as.factor(data_raw$gender)
-
-```
-
-
 
 # Good plot
 
 ```{r}
 rain_height <- 0.15
 
-ggplot(data_raw, aes(x = "", y = depression_level, fill = gender)) +
-  geom_flat_violin(trim=FALSE, alpha = 0.4, position = position_nudge(x = 0.14),
-                   size = 0.3, show.legend = FALSE) +
-  geom_point(aes(color = stress_level), size = 2, alpha = .8, show.legend = TRUE,
-             position = position_jitter(width = 0.12, height = 0.0)) +
-  scale_color_viridis_c(option = "inferno",
-                        begin = 0.3, end = 0.9, direction = -1,
-                        breaks = c(1,2.5,5,7.5,10)) +
-  geom_boxplot(width = rain_height, alpha = 0.4, show.legend = FALSE, 
-               outlier.shape = NA,
-               position = position_nudge(x = -rain_height*2), 
-               size = 0.3) +
-  # geom_signif(comparisons = list(c("female", "male")),
-  #             map_signif_level = TRUE) +
-  facet_wrap(~gender, labeller = as_labeller(c(male = "Male", female = "Female"))) +
-  coord_flip() +
-  labs(title = "Distribution of Depression Severity by Gender and Stress Level",
-       x = "",
-       y = "Depression Severity",
-       color = "Stress Level") + 
-  theme_minimal() +
-  scale_fill_viridis_d(option = "mako", begin = 0.4, end = 0.7, direction = -1) +
-  guides(fill=FALSE) + 
-  theme(strip.text = element_text(size = 12),
-        legend.title = element_text(size = 10),
-        legend.position = "bottom",
-#        legend.position = c(0.5, 0.1),
-        legend.direction = "horizontal",
-        legend.background = element_rect(fill = "white", colour = "black", size = 0.1)) + # Legende horizontal ausrichten
-  guides(color = guide_legend(title.position = "top", title.hjust = 0.5)) 
-
-ggsave("../communication/good.png", bg = "white", width = 20, height = 14, units = "cm")
-
-```
-
-This Plot is a combination of a violin plot, a box plot and a scatter plot also called rainplot. It is suitable for visualizing continuous variables. 
-
-The Violin plot is useful for comparing distributions between different groups - here gender. It shows the density of the depression severity scores at different levels, indicating where values are concentrated.
-
-The Box plot is useful for a summary of the central tendencies of each gender category. It shows clearly that the median of the two groups are different.  
-
-The Scatter plot is helpful to visualize the individual observations of the depression severity scores.  Here it is coloured as well by stress level. This is helpful to identify patterns or outliers and in this specific case to explore the relationship between stress and depression. 
-
-In summary this plot aims to convey the distribution and central tendencies of depression severity by gender and to explore the relation between depression severity and stress levels. 
-
-```{r}
-ggplot(data_raw, aes(x = gender, y = depression_level, fill = gender)) +
-  geom_flat_violin(trim = FALSE, alpha = 0.4, position = position_nudge(x = 0.2), size = 0.3) +
-  geom_point(aes(color = stress_level), size = 2, alpha = .8, 
-             position = position_jitter(width = 0.1, height = 0.0)) +
-  scale_color_viridis_c(option = "inferno", begin = 0.3, end = 0.9, direction = -1,
-                        breaks = c(1,2.5,5,7.5,10)) +
-  geom_boxplot(width = rain_height, alpha = 0.4, outlier.shape = NA,
-               position = position_nudge(x = -0.2), size = 0.3) +
-  geom_signif(comparisons = list(c("female", "male")),
-              map_signif_level = TRUE,
-              y_position = 13,
-              tip_length = 0.02) + 
-  coord_flip() +
-  labs(title = "Distribution of Depression Severity by Gender and Stress Level",
-       x = "",
-       y = "Depression Severity",
-       color = "Stress Level") + 
-  theme_minimal() +
-  scale_fill_viridis_d(option = "mako", begin = 0.4, end = 0.7, direction = -1) +
-  guides(fill = FALSE, color = guide_legend(title.position = "top", title.hjust = 0.5)) +
-  theme(legend.position = "bottom",
-        legend.direction = "horizontal",
-        legend.background = element_rect(fill = "white", colour = "black", size = 0.1),
-        strip.text = element_text(size = 12),
-        legend.title = element_text(size = 10), 
-        axis.text.y = element_text(size = 12)) +
-  scale_x_discrete(labels = c("female" = "Female", "male" = "Male")) 
-
-ggsave("../communication/good_2.png", bg = "white", width = 20, height = 20, units = "cm")
-
+p1 <- ggplot(data_raw, aes(x = gender, y = depression_level, fill = gender)) +
+      geom_flat_violin(trim = FALSE, alpha = 0.4,
+                       adjust = 0.8, 
+                       position = position_nudge(x = 0.15), 
+                       size = 0.3) +
+      geom_point(aes(color = stress_level), size = 3, alpha = .7, 
+                 position = position_jitter(width = 0.1, height = 0)) +
+      scale_color_gradient(low = "blue", high = "red", 
+                           breaks = c(1,2.5,5,7.5,10), 
+                           labels = c("1 - no stress", "2.5", "5 - medium stress", 
+                           "7.5", "10 - high stress")) +
+      # scale_color_viridis_c(option = "inferno", begin = 0.3, end = 0.9, direction = -1,
+      #                       breaks = c(1,2.5,5,7.5,10)) +
+      geom_boxplot(width = 0.1, alpha = 0.4, outlier.shape = NA,
+                   position = position_nudge(x = -0.2), size = 0.3) +
+      geom_signif(annotation = "p < 0.001",
+                  xmin = 0.8, 
+                  xmax = 1.8,
+                  y_position = 13.5,
+                  tip_length = 0.03, 
+                  size = 0.3, 
+                  textsize = 4) + 
+      coord_flip() +
+      labs(title = "Gender Differences in Depression Severity",
+           subtitle = "Impact of Stress Levels on Depression Severity Among Men and Women",
+           x = "Gender",
+           y = "Depression Severity",
+           color = "Stress Level") + 
+      theme_minimal() +
+      scale_fill_viridis_d(option = "mako", begin = 0.4, end = 0.7, direction = -1) +
+      guides(fill = FALSE, color = guide_legend(title.position = "top", title.hjust = 0.5)) +
+      theme(legend.position = "right",
+           legend.background = element_rect(fill = "white", colour = "black", size = 0.1),
+           legend.title = element_text(size = 13),
+           legend.text = element_text(size = 12),
+           axis.text.y = element_text(size = 14, face = "bold"), # Male / Female
+           axis.text.x = element_text(size = 13), # Scale Deprecivity
+           axis.title.x = element_text(size = 15), # Depression Severity
+           axis.title.y = element_text(size = 15), # Gender
+           plot.title = element_text(size = 19,face = "bold"),
+           plot.subtitle = element_text(size = 16)) +
+      scale_x_discrete(labels = c("female" = "Female", "male" = "Male")) +
+      scale_y_continuous(breaks = c(1, 5, 10))
 
 ```
 
+This plot, known as a rainplot, combines elements of a violin plot, box plot, and scatter plot, offering a multi-layered approach to visualizing continuous variables.
+
+The violin plot component allows for comparison of the depression severity score distributions across gender groups. It visually represents the data density and indicates where scores are most concentrated, providing a clear picture of the distribution shapes.
+
+The box plot offers a summary of the central tendencies for each gender category, with the medians highlighted, signaling any differences between the groups.
+
+The scatter plot layer displays individual depression severity scores, here color-coded by stress level, facilitating the identification of patterns or outliers. Specifically, it enables an investigation into the relationship between stress and depression severity.
+
+An additional analytical layer indicates statistically significant differences between the groups, adding depth to the interpretation of the data.
+
+The color scheme is intentionally selected to be easily distinguishable and to ensure that colors representing stress levels are distinct, avoiding any potential confusion. The stress level colors transition from 'warm' for lower stress to 'cold' for higher stress, aiding in quick visual differentiation.
+
+Labels and legends are designed for clarity and readability. The layout maximizes space utilization, and the legend is placed to ensure good readabilty.
+
+In essence, this plot strives to effectively communicate the distribution and central tendencies of depression severity across gender while examining the interplay between depression severity and stress levels. 
 
 # Bad plot
 
 ```{r}
 
+p2 <- ggplot(data_raw, aes(x = age, y = depression_level, color = therapy_type)) +
+      geom_point(aes(size = stress_level), alpha = 0.5) +
+      geom_smooth(method = "loess", se = FALSE) +
+      facet_grid(gender ~ education_level) +
+      scale_color_manual(values = c("psychoanalysis" = "yellow", "behavioral therapy" = "yellow3", "medication" = "violet", "no therapy" = "pink")) +
+      theme_minimal() +
+      labs(title = "",
+           x = "",
+           y = "Depression",
+           color = "",
+           size = "Stress") +
+      theme(legend.position = "top",
+            legend.direction = "vertical",
+            legend.title = element_text(size = 15),
+            legend.text = element_text(size = 11),
+            axis.text.y = element_text(size = 12), 
+            axis.text.x = element_text(size = 12), 
+            axis.title.x = element_text(size = 9), 
+            axis.title.y = element_text(size = 8)) 
 
-
- ggsave("../communication/test.jpg")
 
 ```
+The plot lacks a clear title to immediately inform the viewer of the purpose or the main message of the visualization. Additionally, the labels are either missing or unclear. 
+
+The legend titled "Stress" uses circles of varying sizes to represent data points, but without a clear scale or explanation, it's difficult for the viewer to interpret the significance of the size differences accurately. The legend is on the top and the space is not used efficiently. 
+
+The colors used to represent different therapy conditions are too similar, especially the yellow hues, which can easily be confused with one another. This lack of contrast makes it challenging to distinguish between therapy types.
+
+The significant overlap of data points, particularly noticeable in certain therapy categories, obscures individual data and can lead to misinterpretation of the data distribution or trends.
+
+The plot includes multiple trend lines without a legend explaining what they represent. The excess of lines clutters the plot and complicates the interpretation.
+
+The plot tries to convey too many relationships and data points simultaneously, leading to a crowded and confusing visual. Without a clear focus, it's challenging to understand what the key takeaways should be.
 
 # Write to disk
 
@@ -179,7 +178,10 @@ Name them "plot_good_[yourname]" and "plot_bad_[yourname]".
 
 ```{r}
 
+ggsave("../communication/plot_good_David_Schlegel.png", p1, bg = "white", 
+       width = 10, height = 8, dpi = 300)
 
+ggsave("../communication/plot_bad_David_Schlegel.png", p2, bg = "white")
 
 ```
 
