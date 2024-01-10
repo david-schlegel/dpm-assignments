@@ -126,7 +126,7 @@ The scatter plot layer displays individual depression severity scores, here colo
 
 An additional analytical layer indicates statistically significant differences between the groups, adding depth to the interpretation of the data.
 
-The color scheme is intentionally selected to be easily distinguishable and to ensure that colors representing stress levels are distinct, avoiding any potential confusion. The stress level colors transition from 'warm' for lower stress to 'cold' for higher stress, aiding in quick visual differentiation.
+The color scheme is intentionally selected to be easily distinguishable and to ensure that colors representing stress levels are distinct, avoiding any potential confusion. The stress level colors transition from 'blue' for lower stress to 'red' for higher stress, aiding in quick visual differentiation.
 
 Labels and legends are designed for clarity and readability. The layout maximizes space utilization, and the legend is placed to ensure good readabilty.
 

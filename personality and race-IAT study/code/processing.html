@@ -1664,7 +1664,7 @@ border-radius: 0px;
 big-5 personality facets and implicit racial attitudes</h1>
 <h3 class="subtitle">Data processing</h3>
 <h4 class="author">David Schlegel</h4>
-<h4 class="date">06 January, 2024</h4>
+<h4 class="date">10 January, 2024</h4>
 
 </div>
 
@@ -1807,34 +1807,29 @@ participants with impossible data to “exclude”.</li>
 they completed. Create an exclusion variable and set participants with
 incomplete data to “exclude”.</li>
 </ul>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>check_bfi_scale <span class="ot">&lt;-</span> <span class="cf">function</span>(data, columns, threshold, col_name) {</span>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>check_bfi_scale <span class="ot">&lt;-</span> <span class="cf">function</span>(data, columns, col_name) {</span>
 <span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>  data <span class="sc">%&gt;%</span></span>
 <span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="sc">!!</span>rlang<span class="sc">::</span><span class="fu">sym</span>(col_name) <span class="sc">:=</span> {</span>
 <span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>      vals <span class="ot">&lt;-</span> purrr<span class="sc">::</span><span class="fu">pmap</span>(<span class="fu">list</span>(<span class="sc">!!!</span>rlang<span class="sc">::</span><span class="fu">syms</span>(columns)), <span class="sc">~</span><span class="fu">c</span>(...))</span>
 <span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>      purrr<span class="sc">::</span><span class="fu">map_chr</span>(vals, <span class="cf">function</span>(x) {</span>
 <span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">all</span>(<span class="fu">is.na</span>(x))) {</span>
 <span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>          <span class="st">&quot;include&quot;</span></span>
-<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>        } <span class="cf">else</span> {</span>
-<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a>          num_non_na <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(x))</span>
-<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>          <span class="cf">if</span> (num_non_na <span class="sc">&gt;=</span> threshold) {</span>
-<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a>            <span class="st">&quot;include&quot;</span></span>
-<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a>          } <span class="cf">else</span> {</span>
-<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a>            <span class="st">&quot;exclude&quot;</span></span>
-<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a>          }</span>
-<span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a>        }</span>
-<span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a>      })</span>
-<span id="cb18-17"><a href="#cb18-17" tabindex="-1"></a>    })</span>
-<span id="cb18-18"><a href="#cb18-18" tabindex="-1"></a>}</span>
-<span id="cb18-19"><a href="#cb18-19" tabindex="-1"></a></span>
-<span id="cb18-20"><a href="#cb18-20" tabindex="-1"></a></span>
-<span id="cb18-21"><a href="#cb18-21" tabindex="-1"></a></span>
-<span id="cb18-22"><a href="#cb18-22" tabindex="-1"></a>dat_bfi_participant_completeness <span class="ot">&lt;-</span> dat_bif_recoded <span class="sc">|&gt;</span>  </span>
-<span id="cb18-23"><a href="#cb18-23" tabindex="-1"></a>  <span class="fu">check_bfi_scale</span>(sub_bfi_a, <span class="dv">9</span>, <span class="st">&quot;exclude_sub_bfi_agreeablenes&quot;</span>) <span class="sc">|&gt;</span>  </span>
-<span id="cb18-24"><a href="#cb18-24" tabindex="-1"></a>  <span class="fu">check_bfi_scale</span>(sub_bfi_c, <span class="dv">9</span>, <span class="st">&quot;exclude_sub_bfi_conscientiousness&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb18-25"><a href="#cb18-25" tabindex="-1"></a>  <span class="fu">check_bfi_scale</span>(sub_bfi_e, <span class="dv">8</span>, <span class="st">&quot;exclude_sub_bfi_extraversion&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb18-26"><a href="#cb18-26" tabindex="-1"></a>  <span class="fu">check_bfi_scale</span>(sub_bfi_o, <span class="dv">10</span>, <span class="st">&quot;exclude_sub_bfi_openness&quot;</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb18-27"><a href="#cb18-27" tabindex="-1"></a>  <span class="fu">check_bfi_scale</span>(sub_bfi_n, <span class="dv">8</span>, <span class="st">&quot;exclude_sub_bfi_neuroticism&quot;</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb18-28"><a href="#cb18-28" tabindex="-1"></a>  <span class="fu">select</span>(unique_id, <span class="fu">c</span>(<span class="fu">starts_with</span>(<span class="st">&quot;exclude&quot;</span>)))</span></code></pre></div>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>        } <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">all</span>(<span class="sc">!</span><span class="fu">is.na</span>(x))) {</span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a>          <span class="st">&quot;include&quot;</span></span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>        } <span class="cf">else</span> {</span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a>          <span class="st">&quot;exclude&quot;</span></span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a>        }</span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a>      })</span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a>    })</span>
+<span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a>}</span>
+<span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a></span>
+<span id="cb18-17"><a href="#cb18-17" tabindex="-1"></a>dat_bfi_participant_completeness <span class="ot">&lt;-</span> dat_bif_recoded <span class="sc">|&gt;</span>  </span>
+<span id="cb18-18"><a href="#cb18-18" tabindex="-1"></a>  <span class="fu">check_bfi_scale</span>(sub_bfi_a, <span class="st">&quot;exclude_sub_bfi_agreeablenes&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb18-19"><a href="#cb18-19" tabindex="-1"></a>  <span class="fu">check_bfi_scale</span>(sub_bfi_c, <span class="st">&quot;exclude_sub_bfi_conscientiousness&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb18-20"><a href="#cb18-20" tabindex="-1"></a>  <span class="fu">check_bfi_scale</span>(sub_bfi_e, <span class="st">&quot;exclude_sub_bfi_extraversion&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb18-21"><a href="#cb18-21" tabindex="-1"></a>  <span class="fu">check_bfi_scale</span>(sub_bfi_o, <span class="st">&quot;exclude_sub_bfi_openness&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb18-22"><a href="#cb18-22" tabindex="-1"></a>  <span class="fu">check_bfi_scale</span>(sub_bfi_n, <span class="st">&quot;exclude_sub_bfi_neuroticism&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb18-23"><a href="#cb18-23" tabindex="-1"></a>  <span class="fu">select</span>(unique_id, <span class="fu">c</span>(<span class="fu">starts_with</span>(<span class="st">&quot;exclude&quot;</span>)))</span></code></pre></div>
 </div>
 </div>
 <div id="mean-score-subscales-incl.-sanity-check" class="section level2">

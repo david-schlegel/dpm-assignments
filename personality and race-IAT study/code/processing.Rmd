@@ -146,37 +146,24 @@ dat_bfi_scores_completeness <- dat_bif_recoded |>
  - Check that all participants have complete data on the BFI scales they completed. Create an exclusion variable and set participants with incomplete data to "exclude".
 
 ```{r}
-
-check_bfi_scale <- function(data, columns, threshold, col_name) {
-  data %>%
+check_bfi_scale <- function(data, columns, col_name) {
+  data |> 
     mutate(!!rlang::sym(col_name) := {
       vals <- purrr::pmap(list(!!!rlang::syms(columns)), ~c(...))
       purrr::map_chr(vals, function(x) {
-        if (all(is.na(x))) {
-          "include"
-        } else {
-          num_non_na <- sum(!is.na(x))
-          if (num_non_na >= threshold) {
-            "include"
-          } else {
-            "exclude"
-          }
-        }
-      })
-    })
-}
-
-
+        if (all(is.na(x))) {"include"} 
+        else if (all(!is.na(x))) {"include"} else {"exclude"}})})}
 
 dat_bfi_participant_completeness <- dat_bif_recoded |>  
-  check_bfi_scale(sub_bfi_a, 9, "exclude_sub_bfi_agreeablenes") |>  
-  check_bfi_scale(sub_bfi_c, 9, "exclude_sub_bfi_conscientiousness") |>
-  check_bfi_scale(sub_bfi_e, 8, "exclude_sub_bfi_extraversion") |>
-  check_bfi_scale(sub_bfi_o, 10, "exclude_sub_bfi_openness") |> 
-  check_bfi_scale(sub_bfi_n, 8, "exclude_sub_bfi_neuroticism") |> 
+  check_bfi_scale(sub_bfi_a, "exclude_sub_bfi_agreeablenes") |> 
+  check_bfi_scale(sub_bfi_c, "exclude_sub_bfi_conscientiousness") |>
+  check_bfi_scale(sub_bfi_e, "exclude_sub_bfi_extraversion") |>
+  check_bfi_scale(sub_bfi_o, "exclude_sub_bfi_openness") |> 
+  check_bfi_scale(sub_bfi_n, "exclude_sub_bfi_neuroticism") |> 
   select(unique_id, c(starts_with("exclude")))
 
 ```
+
 
 ## Mean-Score subscales incl. sanity check
 - Mean-score the subscales of the BFI scale. Each participant only got either 2 or 3 subscales. 
